@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro recebido | CRM na Mão</title>
+  <meta name="description" content="Recebemos seus dados. Volte para a conversa no WhatsApp com nossa equipe para receber o link exclusivo de pagamento." />
+  <meta name="robots" content="noindex" />
+
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600;1,700&family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/obrigado.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="CRM na Mão">
+        <span class="brand-logo"><img src="assets/logo.webp" alt="CRM na Mão" /></span>
+        <span class="brand-name">CRM na Mão</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ===== CONFIRMAÇÃO DE CADASTRO ===== -->
+  <section class="obrigado">
+    <div class="container">
+      <div class="obrigado-card">
+
+        <div class="obrigado-head">
+          <p class="eyebrow"><span class="eyebrow-line"></span> CADASTRO RECEBIDO</p>
+          <h1>Recebemos seus dados! 👋</h1>
+          <p>Seu cadastro foi preenchido corretamente e já está com a nossa equipe. Falta só um passo pra gente liberar o seu link exclusivo de pagamento.</p>
+        </div>
+
+        <ol class="obrigado-steps">
+          <li class="obrigado-step">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <h2>Volte para a conversa no WhatsApp</h2>
+              <p>Volte para a conversa que você já tem com o nosso vendedor no WhatsApp e avise que preencheu o formulário de cadastro corretamente.</p>
+            </div>
+          </li>
+
+          <li class="obrigado-step">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <h2>Aguarde o link exclusivo</h2>
+              <p>A partir daí, nossa equipe vai te enviar, pelo próprio WhatsApp, o link exclusivo com o desconto combinado pra você finalizar o pagamento.</p>
+            </div>
+          </li>
+        </ol>
+
+        <p class="obrigado-nota">Perdeu o contato da conversa? Fale com a gente pelo suporte: <a href="https://wa.me/5516997296208" target="_blank" rel="noopener">wa.me/5516997296208</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">
+        <img src="assets/logo.webp" alt="Logo CRM na Mão" style="height: 64px; width: auto; margin: 0 auto;" />
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> CRM na Mão. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

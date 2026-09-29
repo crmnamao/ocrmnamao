@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plano Expresso + Pense | CRM na Mão</title>
+  <meta name="description" content="8 encontros com mentores + 8 encontros com atores e acesso completo à Plataforma Pense Revalida." />
+
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600;1,700&family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html#inicio" class="brand" aria-label="CRM na Mão">
+        <span class="brand-logo"><img src="assets/logo.webp" alt="CRM na Mão" /></span>
+        <span class="brand-name">CRM na Mão</span>
+      </a>
+
+      <nav class="nav" id="nav" aria-label="Navegação principal">
+        <a href="index.html#metodo">Nosso Método</a>
+        <a href="index.html#equipe">Nossa Equipe</a>
+        <a href="index.html#planos">Planos</a>
+        <a href="index.html#depoimentos">Depoimentos</a>
+        <a href="index.html#perguntas">Perguntas</a>
+        <a href="login.html" class="btn btn-nav btn-nav-login">Login</a>
+        <a href="index.html#planos" class="btn btn-nav">Ver todos os planos</a>
+      </nav>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== PLANO: RESUMO + FORMULÁRIO ===== -->
+  <section class="plano-hero">
+    <div class="container plano-hero-grid">
+      <div class="plano-hero-info plano-hero-info-accent reveal">
+        <p class="plan-tag">Revalida • 2ª Fase</p>
+        <h1>Expresso + Pense</h1>
+        <p class="plano-hero-sub">8 encontros com mentores + 8 encontros com atores</p>
+        <p class="plano-hero-preco"><span class="valor">R$ 1.350</span><span class="rotulo">pagamento único</span></p>
+        <p class="plano-page-desc">
+          O Expresso + Pense pega tudo que o Expresso oferece e adiciona a Plataforma Pense Revalida completa:
+          mais encontros com ator, mais checklists praticados e mais mentores acompanhando você de perto até o
+          dia da prova.
+        </p>
+        <ul class="plan-features">
+          <li>Simulações reais do Revalida INEP (2020–2025.2) comentadas por especialistas</li>
+          <li>Videoaulas de esqueletos + material de apoio + guia de documentos</li>
+          <li>8 aulas de especialistas, live emocional e 2 mentores no WhatsApp</li>
+          <li>Dois encontros semanais com ator (5 checklists)</li>
+          <li>Acesso completo à Plataforma Pense Revalida</li>
+        </ul>
+      </div>
+
+      <div class="plano-hero-form reveal">
+        <div class="compra-card">
+          <div class="compra-head">
+            <p class="eyebrow"><span class="eyebrow-line"></span> QUASE LÁ</p>
+            <h1>Finalize sua inscrição</h1>
+            <p>Preencha seus dados abaixo. Ao confirmar, você será direcionado(a) para o pagamento.</p>
+          </div>
+
+          <form id="formCompra" novalidate>
+            <div class="form-group">
+              <label>Plano escolhido</label>
+              <div class="plano-selecionado">
+                <strong>Expresso + Pense</strong>
+                <a href="index.html#planos">Trocar plano</a>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="nome">Nome completo</label>
+              <input type="text" id="nome" name="nome" placeholder="Seu nome completo" autocomplete="name" required />
+              <span class="form-error"></span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" placeholder="voce@email.com" autocomplete="email" required />
+                <span class="form-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="whatsapp">WhatsApp</label>
+                <input type="tel" id="whatsapp" name="whatsapp" placeholder="(00) 00000-0000" autocomplete="tel" required />
+                <span class="form-error"></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cpf">CPF</label>
+              <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" inputmode="numeric" required />
+              <span class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="endereco">Endereço completo</label>
+              <input type="text" id="endereco" name="endereco" placeholder="Rua, número, bairro, cidade, CEP" autocomplete="street-address" required />
+              <span class="form-error"></span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="estado">Estado</label>
+                <input type="text" id="estado" name="estado" placeholder="Ex: São Paulo" autocomplete="address-level1" required />
+                <span class="form-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="pais">País</label>
+                <input type="text" id="pais" name="pais" placeholder="Ex: Brasil" autocomplete="country-name" required />
+                <span class="form-error"></span>
+              </div>
+            </div>
+
+            <div class="form-group form-group-checkbox">
+              <label class="checkbox-label" for="termos">
+                <input type="checkbox" id="termos" name="termos" required />
+                <span>Li e aceito o <a href="termos.html" target="_blank" rel="noopener">Termo de Uso</a> da CRM na Mão.</span>
+              </label>
+              <span class="form-error"></span>
+            </div>
+
+            <button type="submit" id="compraSubmit" class="btn btn-primary btn-lg compra-submit">
+              Continuar para o pagamento
+            </button>
+            <p id="compraStatus" class="compra-status" role="status"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">
+        <img src="assets/logo.webp" alt="Logo CRM na Mão" style="height: 64px; width: auto; margin: 0 auto;" />
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> CRM na Mão. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/5516997296208" target="_blank" rel="noopener" class="whatsapp-float" aria-label="Fale conosco no WhatsApp">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.385.694 4.611 1.885 6.476L4 29l7.716-1.862A11.94 11.94 0 0016 27c6.627 0 12-5.373 12-12S22.628 3 16.001 3zm0 21.818a9.77 9.77 0 01-5.02-1.377l-.36-.214-3.716.897.912-3.615-.235-.372A9.8 9.8 0 016.182 15c0-5.413 4.406-9.818 9.819-9.818 5.412 0 9.818 4.405 9.818 9.818 0 5.412-4.406 9.818-9.818 9.818zm5.377-7.34c-.294-.147-1.741-.859-2.011-.957-.27-.099-.467-.147-.663.147-.196.294-.76.957-.933 1.153-.172.196-.343.221-.637.074-.294-.147-1.242-.458-2.365-1.462-.874-.78-1.464-1.744-1.636-2.038-.172-.294-.018-.453.129-.6.132-.132.294-.343.441-.514.147-.172.196-.294.294-.49.098-.196.049-.368-.024-.515-.074-.147-.663-1.597-.909-2.187-.239-.575-.482-.497-.663-.506-.172-.008-.368-.01-.564-.01-.196 0-.515.074-.784.368-.27.294-1.03 1.006-1.03 2.454s1.054 2.847 1.201 3.043c.147.196 2.073 3.166 5.02 4.44.702.303 1.25.484 1.677.62.705.224 1.347.192 1.855.117.566-.084 1.741-.712 1.986-1.4.245-.688.245-1.278.172-1.4-.073-.122-.269-.196-.563-.343z" />
+    </svg>
+  </a>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    window.PLANO_ATUAL = {
+      nome: "Expresso + Pense",
+      checkoutUrlReserva: "https://wa.me/5516997296208?text=" + encodeURIComponent("Olá! Quero contratar o plano Expresso + Pense (R$ 1.350,00) da CRM na Mão."),
+    };
+  </script>
+  <script src="js/main.js"></script>
+  <script src="js/plano-checkout.js"></script>
+</body>
+</html>

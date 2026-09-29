@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Admin | CRM na Mão</title>
+  <meta name="robots" content="noindex" />
+
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600;1,700&family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="plat-body">
+
+  <!-- ===== TOPBAR ===== -->
+  <header class="plat-topbar">
+    <a href="index.html" class="brand" aria-label="CRM na Mão">
+      <span class="brand-logo"><img src="assets/logo.webp" alt="CRM na Mão" /></span>
+      <span class="brand-name">CRM na Mão · Admin</span>
+    </a>
+
+    <div class="plat-usuario">
+      <div class="plat-avatar" id="userAvatar"></div>
+      <div class="plat-usuario-info">
+        <span class="plat-usuario-nome" id="userNome"></span>
+        <span class="plat-usuario-email" id="userEmail"></span>
+      </div>
+      <a href="plataforma.html" class="plat-btn-sair" style="margin-right: 10px;">Plataforma</a>
+      <button type="button" class="plat-btn-sair" id="btnSair">Sair</button>
+    </div>
+  </header>
+
+  <main class="admin-main" id="adminMain"></main>
+
+  <!-- ===== MODAIS (aluno / histórico) ===== -->
+  <div class="quiz-overlay" id="adminModalOverlay" hidden></div>
+
+  <script src="js/admin-config.js"></script>
+  <script src="js/plataforma-dados.js"></script>
+  <script src="js/alunos-store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

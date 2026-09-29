@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | CRM na Mão</title>
+  <meta name="description" content="Entre com sua conta Google para acessar a área do aluno CRM na Mão." />
+  <meta name="robots" content="noindex" />
+
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600;1,700&family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 140px 24px 60px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 44px 36px;
+      text-align: center;
+    }
+    .login-card .brand-logo {
+      height: 56px;
+      margin: 0 auto 20px;
+    }
+    .login-card h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    .login-card p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .login-google-btn {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+      min-height: 44px;
+    }
+    .login-status {
+      margin-top: 18px;
+      font-size: 13.5px;
+      color: var(--accent-2);
+      display: none;
+    }
+    .login-status.is-visible {
+      display: block;
+    }
+    .login-pendente {
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--card-border);
+      font-size: 12.5px;
+      color: var(--muted-2);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="CRM na Mão">
+        <span class="brand-logo"><img src="assets/logo.webp" alt="CRM na Mão" /></span>
+        <span class="brand-name">CRM na Mão</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ===== LOGIN ===== -->
+  <section class="login-page">
+    <div class="login-card">
+      <span class="brand-logo"><img src="assets/logo.webp" alt="CRM na Mão" /></span>
+      <h1>Acesse sua conta</h1>
+      <p>Entre com sua conta Google para acessar a plataforma da CRM na Mão.</p>
+
+      <div class="login-google-btn" id="googleBtn"></div>
+
+      <p id="loginStatus" class="login-status" role="status"></p>
+
+      <p class="login-pendente">
+        ⚠️ A plataforma já está no ar com o mecanismo de videoaulas, material de apoio e quiz
+        funcionando. O conteúdo completo (vídeos e questões de cada estação) ainda está sendo
+        adicionado edição por edição.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">
+        <img src="assets/logo.webp" alt="Logo CRM na Mão" style="height: 64px; width: auto; margin: 0 auto;" />
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> CRM na Mão. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Client ID do projeto "Login site crm" no Google Cloud Console,
+    // conta contato@facilitandocrmnamao.com. Origens JavaScript autorizadas:
+    // https://www.ocrmnamao.com.br, https://ocrmnamao.com.br e
+    // http://localhost:8791 (para testes locais).
+    const GOOGLE_CLIENT_ID = "1038340405462-44peel60jre2psmpa6ieg7rks3i5enme.apps.googleusercontent.com";
+
+    // Decodifica o JWT que o Google devolve (só client-side, sem validar
+    // assinatura -- isso é só pra mostrar o nome/e-mail na tela). A validação
+    // de verdade (obrigatória antes de confiar nesses dados) precisa
+    // acontecer no backend, quando ele existir -- ver pendência da
+    // plataforma do aluno.
+    function decodificarJwt(token) {
+      try {
+        const payload = token.split(".")[1];
+        return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+      } catch (erro) {
+        return null;
+      }
+    }
+
+    // Grava a sessão localmente (client-side) e manda o aluno pra
+    // plataforma. TODO (pendência): quando existir backend, validar a
+    // assinatura do token do lado do servidor e criar uma sessão de
+    // verdade (hoje isso confia no que o próprio navegador decodificou).
+    function iniciarSessao(dados) {
+      localStorage.setItem(
+        "crmnamao_sessao",
+        JSON.stringify({
+          nome: dados.name || dados.email,
+          email: dados.email,
+          foto: dados.picture || null,
+          criadoEm: new Date().toISOString(),
+        })
+      );
+      window.location.href = "plataforma.html";
+    }
+
+    function handleCredentialResponse(response) {
+      const dados = decodificarJwt(response.credential);
+      const status = document.getElementById("loginStatus");
+      if (!dados) return;
+
+      status.textContent = "Login recebido: " + dados.email + ". Entrando na plataforma...";
+      status.classList.add("is-visible");
+      iniciarSessao(dados);
+    }
+
+    window.onload = function () {
+      if (!window.google || GOOGLE_CLIENT_ID === "SEU_GOOGLE_CLIENT_ID_AQUI") {
+        document.getElementById("googleBtn").innerHTML =
+          '<p style="color: var(--muted-2); font-size: 13px; margin-bottom: 14px;">Login com Google ainda não configurado (falta o Client ID).</p>' +
+          '<button type="button" id="btnModoTeste" class="btn btn-plan-outline" style="width: 100%;">Entrar em modo de teste</button>';
+        document.getElementById("btnModoTeste").addEventListener("click", function () {
+          iniciarSessao({ name: "Aluno(a) Teste", email: "teste@ocrmnamao.com.br", picture: null });
+        });
+        return;
+      }
+
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
+
+      google.accounts.id.renderButton(document.getElementById("googleBtn"), {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        shape: "pill",
+        text: "signin_with",
+        logo_alignment: "left",
+      });
+    };
+  </script>
+</body>
+</html>
