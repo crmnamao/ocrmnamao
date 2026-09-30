@@ -16,7 +16,7 @@
   // wrangler imprime no deploy; WORKER_ADMIN_TOKEN é o mesmo valor
   // configurado com `wrangler secret put ADMIN_TOKEN`.
   var WORKER_URL = "https://crmnamao-video-import.empty-frost-231e.workers.dev";
-  var WORKER_ADMIN_TOKEN = "db0cd22bf0e8236da054eb04fc4ba272e29150430e41012c90b0d47ad0e9fc9c";
+  var WORKER_ADMIN_TOKEN = "1888e22c146cff203f5a2ac2bd179f10e71792a8cb86f9924326b99720b2d042";
 
   // Mantenha esta lista igual ao array PRODUTOS do
   // google-apps-script-planilha-setup.gs.
