@@ -2034,7 +2034,7 @@ section {
   }
 }
 
-/* ---------- Botão "Fale com a gente" ---------- */
+/* ---------- Botões "Fale com a gente" e "Feedback" ---------- */
 .plat-btn-feedback {
   background: transparent;
   border: 1px solid var(--card-border);

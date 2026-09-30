@@ -135,7 +135,7 @@
     elFeedbackOverlay.innerHTML =
       '<div class="quiz-modal-card plat-form-modal">' +
         '<div class="quiz-modal-topo">' +
-          "<h2>Fale com a gente</h2>" +
+          "<h2>Feedback</h2>" +
           '<button type="button" class="quiz-modal-fechar" id="feedbackFechar" aria-label="Fechar">✕</button>' +
         "</div>" +
         '<p class="plat-form-nota">Dúvida, erro na plataforma ou sugestão — sua mensagem cai direto na nossa equipe.</p>' +
