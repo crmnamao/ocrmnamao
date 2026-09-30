@@ -9,22 +9,18 @@
 //
 // Formato geral: PLATAFORMA_DADOS.grupos é uma lista de "grupos" (Esqueletos,
 // Aulas com Especialistas, cada edição do Revalida). Cada grupo tem uma
-// lista PLANA de "itens" -- sem aninhar vídeo+quiz num card só: um item é OU
-// um vídeo (com material de apoio opcional) OU um quiz nomeado, cada um com
-// sua própria linha na barra lateral (bate com o modelo real já usado pelo
-// aluno, não o antigo "estação = 2 vídeos + quiz juntos").
+// lista PLANA de "itens", todos tipo "video" -- cada item é uma única linha
+// na barra lateral, com os vídeos, material de apoio e (quando existe) o
+// quiz da estação TODOS dentro da mesma página. O quiz só fica liberado
+// depois que o aluno assiste todos os vídeos do item (ver itemConcluido/
+// renderQuizSecaoEmbutida em plataforma.js).
 //
 // item tipo "video":
 // {
 //   id, tipo: "video", titulo: string, emBreve: boolean,
 //   videos: [{ titulo: string, url: string|null }, ...],  // url=null -> "em breve"
-//   material: { titulo: string, url: string|null } | null
-// }
-//
-// item tipo "quiz":
-// {
-//   id, tipo: "quiz", titulo: string, emBreve: boolean,
-//   quiz: [{ pergunta, alternativas:[4], correta: 0-3, explicacao }, ...]
+//   material: { titulo: string, url: string|null } | null,
+//   quiz: [{ pergunta, alternativas:[4], correta: 0-3, explicacao }, ...] | undefined
 // }
 
 (function () {
@@ -100,13 +96,7 @@
         titulo: "Estação " + (n < 10 ? "0" + n : n),
         emBreve: false,
         videos: [{ titulo: "Aula", url: null }, { titulo: "Aula comentada", url: null }],
-        material: { titulo: "Resumo da aula (PDF)", url: null }
-      });
-      itens.push({
-        id: "edicao-" + edSlug + "-quiz-" + n,
-        tipo: "quiz",
-        titulo: "Quiz da Estação " + (n < 10 ? "0" + n : n),
-        emBreve: false,
+        material: { titulo: "Resumo da aula (PDF)", url: null },
         quiz: gerarQuizPlaceholder("Revalida " + edicaoLabel + ", Estação " + n)
       });
     }

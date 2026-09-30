@@ -18,11 +18,9 @@
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z"/><path d="M14 3.5V8h4"/>' +
     '<path d="M9 12.5h6M9 15.5h6M9 18.5h3"/></svg>';
-  var ICONE_QUIZ =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M4 6.5l1.5 1.5L8 5.5"/><path d="M11 6.5h9"/>' +
-    '<path d="M4 12.5l1.5 1.5L8 11.5"/><path d="M11 12.5h9"/>' +
-    '<path d="M4 18.5l1.5 1.5L8 17.5"/><path d="M11 18.5h9"/></svg>';
+  var ICONE_CONFERIDO =
+    '<svg viewBox="0 0 24 24" fill="currentColor">' +
+    '<path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.2 14.6l-4.4-4.4 1.4-1.4 3 3 6-6 1.4 1.4-7.4 7.4z"/></svg>';
 
   // ---------- Sessão / autenticação ----------
 
@@ -79,10 +77,6 @@
     AlunosStore.salvarResultadoQuiz(aluno.id, itemId, acertos, total);
   }
 
-  function marcarConcluida(itemId) {
-    AlunosStore.marcarConcluida(aluno.id, itemId);
-  }
-
   // ---------- Utilidades ----------
 
   function escapeHtml(texto) {
@@ -101,8 +95,11 @@
   function itemConcluido(item) {
     var progresso = progressoAtual()[item.id];
     if (!progresso) return false;
-    if (item.tipo === "quiz") return progresso.quiz && progresso.quiz.tentativas > 0;
-    return !!progresso.concluida;
+    var todosVideosAssistidos = item.videos.length > 0 && item.videos.every(function (v, idx) { return !!progresso.videos[idx]; });
+    if (item.quiz) {
+      return todosVideosAssistidos && !!(progresso.quiz && progresso.quiz.tentativas > 0);
+    }
+    return todosVideosAssistidos;
   }
 
   // ---------- Elementos ----------
@@ -216,14 +213,13 @@
             grupo.itens.map(function (item) {
               var ativa = item.id === estadoAtual.itemId;
               var concluido = itemConcluido(item);
-              var icone = item.tipo === "quiz" ? ICONE_QUIZ : ICONE_DOC;
               var rotulo = escapeHtml(item.titulo) + (item.emBreve ? " - EM BREVE" : "");
               return (
                 '<button type="button" class="plat-estacao-item ' + (ativa ? "is-ativa" : "") + (concluido ? " is-concluida" : "") + '" ' +
                   'data-grupo="' + grupo.id + '" data-item="' + item.id + '">' +
-                  '<span class="plat-estacao-icone">' + icone + '</span>' +
+                  '<span class="plat-estacao-icone">' + ICONE_DOC + '</span>' +
                   '<span>' + rotulo + '</span>' +
-                  (concluido ? '<span class="plat-estacao-check">✓</span>' : "") +
+                  (concluido ? '<span class="plat-estacao-check">' + ICONE_CONFERIDO + '</span>' : "") +
                 '</button>'
               );
             }).join("") +
@@ -267,8 +263,11 @@
           (descricaoPadrao ? '<p class="plat-video-descricao">' + escapeHtml(descricaoPadrao) + '</p>' : "") +
           '<video controls playsinline webkit-playsinline controlsList="nodownload" class="plat-video-player" data-item="' + item.id + '" data-idx="' + idx + '" src="' + escapeHtml(video.url) + '"></video>' +
           '<p class="plat-video-status ' + (assistido ? "is-ok" : "") + '">' +
-            (assistido ? "✓ Assistido" : "Assista até o fim para marcar como concluído") +
+            (assistido ? "✓ Assistido" : "Assista até o fim (100%) para marcar como concluído") +
           '</p>' +
+          '<button type="button" class="plat-btn-marcar" data-item="' + item.id + '" data-idx="' + idx + '" data-acao="' + (assistido ? "reassistir" : "marcar") + '">' +
+            (assistido ? "Assistir novamente" : "Já assisti, marcar como concluído") +
+          '</button>' +
         '</div>'
       );
     }
@@ -278,7 +277,7 @@
         '<p class="plat-video-titulo">' + escapeHtml(video.titulo) + '</p>' +
         (descricaoPadrao ? '<p class="plat-video-descricao">' + escapeHtml(descricaoPadrao) + '</p>' : "") +
         '<div class="plat-video-placeholder">🎬 Vídeo em produção — em breve disponível aqui</div>' +
-        '<button type="button" class="plat-btn-marcar ' + (assistido ? "is-marcado" : "") + '" data-item="' + item.id + '" data-idx="' + idx + '">' +
+        '<button type="button" class="plat-btn-marcar ' + (assistido ? "is-marcado" : "") + '" data-item="' + item.id + '" data-idx="' + idx + '" data-acao="marcar">' +
           (assistido ? "✓ Marcado como assistido" : "Marcar como assistido") +
         '</button>' +
       '</div>'
@@ -304,20 +303,22 @@
     );
   }
 
-  function renderConcluirEtapa(item) {
-    var concluido = itemConcluido(item);
-    return (
-      '<div class="plat-concluir-box">' +
-        '<button type="button" class="btn btn-plan plat-btn-concluir ' + (concluido ? "is-concluido" : "") + '" id="btnConcluirEtapa" data-item="' + item.id + '">' +
-          (concluido ? "✓ Etapa concluída" : "Concluir etapa") +
-        '</button>' +
-      '</div>'
-    );
-  }
-
-  function renderQuizLanding(item) {
-    var progresso = getItemProgresso(item.id, 0);
+  function renderQuizSecaoEmbutida(item) {
+    var progresso = getItemProgresso(item.id, item.videos.length);
+    var todosAssistidos = item.videos.every(function (v, idx) { return !!progresso.videos[idx]; });
     var quizInfo = progresso.quiz;
+    var totalPerguntas = item.quiz.length;
+    var rotuloPerguntas = totalPerguntas + (totalPerguntas > 1 ? " perguntas" : " pergunta");
+
+    if (!todosAssistidos) {
+      return (
+        '<div class="plat-quiz-box plat-quiz-bloqueado">' +
+          '<h3>Quiz (' + rotuloPerguntas + ')</h3>' +
+          '<p class="plat-quiz-aviso">🔒 Assista os vídeos desta estação até o fim pra liberar o quiz.</p>' +
+        '</div>'
+      );
+    }
+
     var historico = "";
     if (quizInfo.tentativas > 0) {
       historico =
@@ -328,7 +329,7 @@
     var rotuloBotao = quizInfo.tentativas > 0 ? "Refazer quiz" : "Iniciar quiz";
     return (
       '<div class="plat-quiz-box">' +
-        '<h3>' + item.quiz.length + ' pergunta(s)</h3>' +
+        '<h3>Quiz (' + rotuloPerguntas + ')</h3>' +
         '<button type="button" class="btn btn-plan plat-btn-quiz" id="btnIniciarQuiz">' + rotuloBotao + '</button>' +
         historico +
       '</div>'
@@ -349,19 +350,6 @@
     var grupo = achado.grupo;
     var item = achado.item;
 
-    if (item.tipo === "quiz") {
-      elMain.innerHTML =
-        '<div class="plat-breadcrumb">' + escapeHtml(grupo.titulo) + '</div>' +
-        '<h1 class="plat-tema">' + escapeHtml(item.titulo) + '</h1>' +
-        renderQuizLanding(item);
-
-      var btnQuiz = document.getElementById("btnIniciarQuiz");
-      if (btnQuiz) {
-        btnQuiz.addEventListener("click", function () { abrirQuiz(item); });
-      }
-      return;
-    }
-
     elMain.innerHTML =
       '<div class="plat-breadcrumb">' + escapeHtml(grupo.titulo) + '</div>' +
       '<h1 class="plat-tema">' + escapeHtml(item.titulo) + '</h1>' +
@@ -369,9 +357,17 @@
         item.videos.map(function (v, idx) { return renderVideoCard(item, idx); }).join("") +
       '</div>' +
       renderMaterialCard(item) +
-      renderConcluirEtapa(item);
+      (item.quiz ? renderQuizSecaoEmbutida(item) : "");
 
     elMain.querySelectorAll(".plat-video-player").forEach(function (videoEl) {
+      var maiorTempoAssistido = 0;
+      videoEl.addEventListener("timeupdate", function () {
+        if (!videoEl.seeking) maiorTempoAssistido = Math.max(maiorTempoAssistido, videoEl.currentTime);
+      });
+      videoEl.addEventListener("seeking", function () {
+        // Impede pular pra frente sem assistir -- só permite voltar pra rever trechos.
+        if (videoEl.currentTime > maiorTempoAssistido + 1) videoEl.currentTime = maiorTempoAssistido;
+      });
       videoEl.addEventListener("ended", function () {
         var idx = parseInt(videoEl.getAttribute("data-idx"), 10);
         marcarVideoAssistido(item.id, idx, item.videos.length);
@@ -383,19 +379,20 @@
     elMain.querySelectorAll(".plat-btn-marcar").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var idx = parseInt(btn.getAttribute("data-idx"), 10);
+        if (btn.getAttribute("data-acao") === "reassistir") {
+          var videoEl = elMain.querySelector('.plat-video-player[data-idx="' + idx + '"]');
+          if (videoEl) { videoEl.currentTime = 0; videoEl.play(); }
+          return;
+        }
         marcarVideoAssistido(item.id, idx, item.videos.length);
         renderSidebar();
         renderMain();
       });
     });
 
-    var btnConcluir = document.getElementById("btnConcluirEtapa");
-    if (btnConcluir) {
-      btnConcluir.addEventListener("click", function () {
-        marcarConcluida(item.id);
-        renderSidebar();
-        renderMain();
-      });
+    var btnQuiz = document.getElementById("btnIniciarQuiz");
+    if (btnQuiz) {
+      btnQuiz.addEventListener("click", function () { abrirQuiz(item); });
     }
   }
 

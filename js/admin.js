@@ -1104,28 +1104,28 @@
       grupo.itens.forEach(function (item) {
         var p = progresso[item.id];
         if (!p) return;
-        if (item.tipo === "quiz") {
-          var quiz = p.quiz || { tentativas: 0 };
-          if (quiz.tentativas === 0) return;
-          totalQuizzesFeitos += 1;
-          somaMelhorAproveitamento += quiz.totalPerguntas ? (quiz.melhorAcertos / quiz.totalPerguntas) : 0;
-          linhasItens.push(
-            "<tr>" +
-              "<td>" + escapeHtml(item.titulo) + "</td>" +
-              "<td>Quiz</td>" +
-              "<td>Melhor: " + quiz.melhorAcertos + "/" + quiz.totalPerguntas + " · " + quiz.tentativas + " tentativa(s)</td>" +
-            "</tr>"
-          );
-          return;
-        }
+
         var videosAssistidos = (p.videos || []).filter(Boolean).length;
         var totalVideos = item.videos.length;
-        if (p.concluida) totalEstacoesConcluidas += 1;
+        var todosVideosAssistidos = totalVideos > 0 && videosAssistidos === totalVideos;
+        var quiz = p.quiz || { tentativas: 0 };
+        var temQuiz = !!item.quiz;
+        var quizFeito = temQuiz && quiz.tentativas > 0;
+        var concluida = temQuiz ? (todosVideosAssistidos && quizFeito) : todosVideosAssistidos;
+
+        if (quizFeito) {
+          totalQuizzesFeitos += 1;
+          somaMelhorAproveitamento += quiz.totalPerguntas ? (quiz.melhorAcertos / quiz.totalPerguntas) : 0;
+        }
+        if (concluida) totalEstacoesConcluidas += 1;
+
         linhasItens.push(
           "<tr>" +
             "<td>" + escapeHtml(item.titulo) + "</td>" +
-            "<td>" + videosAssistidos + "/" + totalVideos + " vídeos</td>" +
-            "<td>" + (p.concluida ? "✓ Concluída" : "Em andamento") + "</td>" +
+            "<td>" + videosAssistidos + "/" + totalVideos + " vídeos" +
+              (temQuiz ? (quizFeito ? " · Quiz: " + quiz.melhorAcertos + "/" + quiz.totalPerguntas : " · Quiz pendente") : "") +
+            "</td>" +
+            "<td>" + (concluida ? "✓ Concluída" : "Em andamento") + "</td>" +
           "</tr>"
         );
       });

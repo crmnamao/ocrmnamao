@@ -2368,25 +2368,13 @@ section {
 
 .plat-estacao-check {
   flex-shrink: 0;
-  color: var(--accent-2);
-  font-weight: 800;
-  font-size: 13px;
+  color: var(--accent);
+  display: flex;
 }
 
-/* ---------- Botão "Concluir etapa" (itens sem quiz) ---------- */
-.plat-concluir-box {
-  margin-top: 4px;
-}
-
-.plat-btn-concluir {
-  width: auto;
-  padding: 13px 26px;
-}
-
-.plat-btn-concluir.is-concluido {
-  background: var(--accent-soft);
-  color: var(--accent-2);
-  box-shadow: none;
+.plat-estacao-check svg {
+  width: 17px;
+  height: 17px;
 }
 
 .plat-shell {
@@ -2581,6 +2569,10 @@ section {
   font-weight: 700;
 }
 
+.plat-video-card:not(.plat-video-card-pendente) .plat-btn-marcar {
+  margin-top: 12px;
+}
+
 .plat-video-card-pendente {
   display: flex;
   flex-direction: column;
@@ -2686,6 +2678,11 @@ section {
 .plat-quiz-bloqueado {
   color: var(--muted-2);
   font-size: 13.5px;
+}
+
+.plat-quiz-aviso {
+  font-size: 13.5px;
+  color: var(--muted-2);
 }
 
 .plat-quiz-historico {
