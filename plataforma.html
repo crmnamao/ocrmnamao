@@ -43,13 +43,19 @@
         <div class="plat-notif-painel" id="notifPainel" hidden></div>
       </div>
 
-      <div class="plat-avatar" id="userAvatar"></div>
-      <div class="plat-usuario-info">
-        <span class="plat-usuario-nome" id="userNome"></span>
-        <span class="plat-usuario-email" id="userEmail"></span>
+      <div class="plat-userdrop" id="userDropWrapper">
+        <button type="button" class="plat-userdrop-trigger" id="btnUserDrop" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false">
+          <div class="plat-avatar" id="userAvatar"></div>
+          <div class="plat-usuario-info">
+            <span class="plat-usuario-nome" id="userNome"></span>
+            <span class="plat-usuario-email" id="userEmail"></span>
+          </div>
+        </button>
+        <div class="plat-userdrop-painel" id="userDropPainel" hidden>
+          <button type="button" class="plat-userdrop-item" id="btnAbrirPerfil">Meu perfil</button>
+          <button type="button" class="plat-userdrop-item plat-userdrop-sair" id="btnSair">Sair</button>
+        </div>
       </div>
-      <button type="button" class="plat-btn-sair" id="btnAbrirPerfil">Meu perfil</button>
-      <button type="button" class="plat-btn-sair" id="btnSair">Sair</button>
     </div>
   </header>
 

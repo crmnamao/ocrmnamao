@@ -2018,6 +2018,72 @@ section {
   border-color: var(--error);
 }
 
+/* ---------- Menu do usuário (avatar + nome) ---------- */
+.plat-userdrop {
+  position: relative;
+}
+
+.plat-userdrop-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.plat-userdrop-trigger:hover,
+.plat-userdrop-trigger[aria-expanded="true"] {
+  background: var(--gold-soft);
+}
+
+.plat-userdrop-painel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 60;
+}
+
+.plat-userdrop-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.plat-userdrop-item:hover {
+  background: var(--gold-soft);
+}
+
+.plat-userdrop-item.plat-userdrop-sair {
+  color: var(--error);
+}
+
+.plat-userdrop-painel[hidden] {
+  display: none;
+}
+
 /* ---------- Nav do site dentro da plataforma ---------- */
 .plat-nav {
   gap: 24px;

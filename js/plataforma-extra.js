@@ -124,7 +124,13 @@
     });
   }
 
-  if (elBtnAbrirPerfil) elBtnAbrirPerfil.addEventListener("click", abrirPerfil);
+  if (elBtnAbrirPerfil) {
+    elBtnAbrirPerfil.addEventListener("click", function () {
+      var painel = document.getElementById("userDropPainel");
+      if (painel) painel.hidden = true;
+      abrirPerfil();
+    });
+  }
 
   // ================= FEEDBACK (formulário) =================
 

@@ -113,6 +113,9 @@
   var elUserEmail = document.getElementById("userEmail");
   var elUserAvatar = document.getElementById("userAvatar");
   var elBtnSair = document.getElementById("btnSair");
+  var elUserDropWrapper = document.getElementById("userDropWrapper");
+  var elBtnUserDrop = document.getElementById("btnUserDrop");
+  var elUserDropPainel = document.getElementById("userDropPainel");
 
   var estadoAtual = { grupoId: null, itemId: null };
 
@@ -149,11 +152,25 @@
     if (ehAdmin) {
       var linkAdmin = document.createElement("a");
       linkAdmin.href = "admin.html";
-      linkAdmin.className = "plat-btn-sair";
-      linkAdmin.style.marginRight = "10px";
+      linkAdmin.className = "plat-userdrop-item";
       linkAdmin.textContent = "Painel Admin";
       elBtnSair.parentNode.insertBefore(linkAdmin, elBtnSair);
     }
+  }
+
+  if (elBtnUserDrop && elUserDropPainel && elUserDropWrapper) {
+    elBtnUserDrop.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      var abrir = elUserDropPainel.hidden;
+      elUserDropPainel.hidden = !abrir;
+      elBtnUserDrop.setAttribute("aria-expanded", abrir ? "true" : "false");
+    });
+    document.addEventListener("click", function (ev) {
+      if (!elUserDropPainel.hidden && !elUserDropWrapper.contains(ev.target)) {
+        elUserDropPainel.hidden = true;
+        elBtnUserDrop.setAttribute("aria-expanded", "false");
+      }
+    });
   }
 
   // ---------- Bloqueio de acesso (pendente / removido / expirado) ----------
