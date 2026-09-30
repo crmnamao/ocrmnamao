@@ -11,11 +11,10 @@
   var CHAVE_SESSAO = "crmnamao_sessao";
   var ADMIN_EMAILS = window.ADMIN_EMAILS || [];
 
-  // Preencher depois do `wrangler deploy` do Worker em /worker (ver
-  // worker/wrangler.toml e worker/src/index.js). WORKER_URL é a URL que o
-  // wrangler imprime no deploy; WORKER_ADMIN_TOKEN é o mesmo valor
-  // configurado com `wrangler secret put ADMIN_TOKEN`.
-  var WORKER_URL = "https://crmnamao-video-import.empty-frost-231e.workers.dev";
+  // WORKER_URL vem de window.VIDEO_WORKER_URL (js/admin-config.js).
+  // WORKER_ADMIN_TOKEN é o mesmo valor configurado com
+  // `wrangler secret put ADMIN_TOKEN` no Worker (ver /worker, fora deste repo).
+  var WORKER_URL = window.VIDEO_WORKER_URL || "";
   var WORKER_ADMIN_TOKEN = "1888e22c146cff203f5a2ac2bd179f10e71792a8cb86f9924326b99720b2d042";
 
   // Mantenha esta lista igual ao array PRODUTOS do
@@ -427,6 +426,50 @@
     return null;
   }
 
+  function gruposEdicao() {
+    return (window.PLATAFORMA_DADOS ? window.PLATAFORMA_DADOS.grupos : []).filter(function (g) { return g.tipo === "edicao"; });
+  }
+
+  function estacoesDoGrupo(grupoId) {
+    var grupo = gruposEdicao().filter(function (g) { return g.id === grupoId; })[0];
+    if (!grupo) return [];
+    return grupo.itens.filter(function (i) { return i.tipo === "video"; });
+  }
+
+  var ROTULO_TIPO_VIDEO = { original: "Original (prova)", comentado: "Comentado (professor)" };
+
+  function renderClassificacao(item, idx) {
+    if (item.status !== "concluido") return "";
+
+    var c = item.classificacao;
+    var opcoesAno = '<option value="">Selecione o ano</option>' +
+      gruposEdicao().map(function (g) {
+        return '<option value="' + escapeHtml(g.id) + '"' + (c.grupoId === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + "</option>";
+      }).join("");
+
+    var estacoes = c.grupoId ? estacoesDoGrupo(c.grupoId) : [];
+    var opcoesEstacao = '<option value="">' + (c.grupoId ? "Selecione a estação" : "Escolha o ano primeiro") + '</option>' +
+      estacoes.map(function (i) {
+        return '<option value="' + escapeHtml(i.id) + '"' + (c.itemId === i.id ? " selected" : "") + '>' + escapeHtml(i.titulo) + "</option>";
+      }).join("");
+
+    var html =
+      '<div class="admin-video-classificar" data-idx="' + idx + '">' +
+        '<select class="videoSelectAno" data-idx="' + idx + '">' + opcoesAno + "</select>" +
+        '<select class="videoSelectEstacao" data-idx="' + idx + '"' + (!c.grupoId ? " disabled" : "") + '>' + opcoesEstacao + "</select>" +
+        '<select class="videoSelectTipo" data-idx="' + idx + '">' +
+          '<option value="original"' + (c.tipo === "original" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.original + "</option>" +
+          '<option value="comentado"' + (c.tipo === "comentado" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.comentado + "</option>" +
+        "</select>" +
+        '<button type="button" class="admin-link videoBtnVincular" data-idx="' + idx + '">Vincular</button>' +
+      "</div>";
+
+    if (item.vinculado) {
+      html += '<p class="admin-video-vinculado-ok">✓ Vinculado: ' + escapeHtml(item.vinculado) + "</p>";
+    }
+    return html;
+  }
+
   function renderFilaVideos() {
     var elLista = document.getElementById("videoFilaLista");
     if (!elLista) return;
@@ -440,9 +483,9 @@
 
     elLista.innerHTML =
       '<div class="admin-tabela-wrap" style="margin-top:20px;"><table class="admin-tabela">' +
-        "<thead><tr><th>Arquivo</th><th>Status</th><th>URL pública</th></tr></thead>" +
+        "<thead><tr><th>Arquivo</th><th>Status</th><th>URL pública</th><th>Classificar</th></tr></thead>" +
         "<tbody>" +
-        filaVideos.map(function (item) {
+        filaVideos.map(function (item, idx) {
           return (
             "<tr>" +
               "<td>" + escapeHtml(item.nomeArquivo || item.driveId) + "</td>" +
@@ -455,6 +498,7 @@
                     ? escapeHtml(item.erro || "")
                     : "—") +
               "</td>" +
+              "<td>" + renderClassificacao(item, idx) + "</td>" +
             "</tr>"
           );
         }).join("") +
@@ -514,7 +558,12 @@
       var novos = [];
       linhas.forEach(function (linha) {
         var driveId = extrairDriveId(linha);
-        if (driveId) novos.push({ driveId: driveId, status: "pendente", nomeArquivo: null, url: null, erro: null });
+        if (driveId) {
+          novos.push({
+            driveId: driveId, status: "pendente", nomeArquivo: null, url: null, erro: null,
+            classificacao: { grupoId: "", itemId: "", tipo: "original" }, vinculado: null
+          });
+        }
       });
       if (!novos.length) {
         window.alert("Nenhum link ou ID válido encontrado. Confira o que foi colado.");
@@ -524,6 +573,62 @@
       document.getElementById("videoLinksInput").value = "";
       importarFilaVideos();
     });
+
+    var elFilaLista = document.getElementById("videoFilaLista");
+
+    elFilaLista.addEventListener("change", function (ev) {
+      var idx = ev.target.getAttribute("data-idx");
+      if (idx === null) return;
+      var item = filaVideos[idx];
+      if (!item) return;
+
+      if (ev.target.classList.contains("videoSelectAno")) {
+        item.classificacao.grupoId = ev.target.value;
+        item.classificacao.itemId = "";
+        renderFilaVideos();
+      } else if (ev.target.classList.contains("videoSelectEstacao")) {
+        item.classificacao.itemId = ev.target.value;
+      } else if (ev.target.classList.contains("videoSelectTipo")) {
+        item.classificacao.tipo = ev.target.value;
+      }
+    });
+
+    elFilaLista.addEventListener("click", function (ev) {
+      if (!ev.target.classList.contains("videoBtnVincular")) return;
+      var idx = ev.target.getAttribute("data-idx");
+      var item = filaVideos[idx];
+      if (!item) return;
+      vincularVideoClassificado(item, ev.target);
+    });
+  }
+
+  async function vincularVideoClassificado(item, botao) {
+    var c = item.classificacao;
+    if (!c.grupoId || !c.itemId) {
+      window.alert("Escolha o ano e a estação antes de vincular.");
+      return;
+    }
+
+    var grupo = gruposEdicao().filter(function (g) { return g.id === c.grupoId; })[0];
+    var estacao = estacoesDoGrupo(c.grupoId).filter(function (i) { return i.id === c.itemId; })[0];
+    if (!grupo || !estacao) return;
+
+    botao.disabled = true;
+    botao.textContent = "Vinculando...";
+
+    try {
+      var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/catalogo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+        body: JSON.stringify({ itemId: c.itemId, tipo: c.tipo, url: item.url }),
+      });
+      var dados = await resp.json();
+      if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+      item.vinculado = grupo.titulo + " — " + estacao.titulo + " — " + ROTULO_TIPO_VIDEO[c.tipo];
+    } catch (erro) {
+      window.alert("Não deu pra vincular agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderFilaVideos();
   }
 
   // ---------- Modal: adicionar/editar aluno ----------

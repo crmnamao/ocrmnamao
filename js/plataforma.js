@@ -249,16 +249,23 @@
 
   // ---------- Conteúdo principal (item selecionado) ----------
 
+  var DESCRICAO_VIDEO_ESTACAO = [
+    "Vídeo 1: simulação da prova desta estação, do jeito que ela cai no exame.",
+    "Vídeo 2: a mesma simulação, comentada por um professor explicando a condução ideal."
+  ];
+
   function renderVideoCard(item, idx) {
     var video = item.videos[idx];
     var progresso = getItemProgresso(item.id, item.videos.length);
     var assistido = !!progresso.videos[idx];
+    var descricaoPadrao = item.videos.length === 2 ? DESCRICAO_VIDEO_ESTACAO[idx] : null;
 
     if (video.url) {
       return (
         '<div class="plat-video-card">' +
           '<p class="plat-video-titulo">' + escapeHtml(video.titulo) + '</p>' +
-          '<video controls class="plat-video-player" data-item="' + item.id + '" data-idx="' + idx + '" src="' + escapeHtml(video.url) + '"></video>' +
+          (descricaoPadrao ? '<p class="plat-video-descricao">' + escapeHtml(descricaoPadrao) + '</p>' : "") +
+          '<video controls playsinline webkit-playsinline controlsList="nodownload" class="plat-video-player" data-item="' + item.id + '" data-idx="' + idx + '" src="' + escapeHtml(video.url) + '"></video>' +
           '<p class="plat-video-status ' + (assistido ? "is-ok" : "") + '">' +
             (assistido ? "✓ Assistido" : "Assista até o fim para marcar como concluído") +
           '</p>' +
@@ -269,6 +276,7 @@
     return (
       '<div class="plat-video-card plat-video-card-pendente">' +
         '<p class="plat-video-titulo">' + escapeHtml(video.titulo) + '</p>' +
+        (descricaoPadrao ? '<p class="plat-video-descricao">' + escapeHtml(descricaoPadrao) + '</p>' : "") +
         '<div class="plat-video-placeholder">🎬 Vídeo em produção — em breve disponível aqui</div>' +
         '<button type="button" class="plat-btn-marcar ' + (assistido ? "is-marcado" : "") + '" data-item="' + item.id + '" data-idx="' + idx + '">' +
           (assistido ? "✓ Marcado como assistido" : "Marcar como assistido") +
@@ -546,6 +554,37 @@
       fecharQuiz();
     }
   });
+
+  // ---------- Catálogo de vídeos (ano/estação/tipo -> URL real no R2) ----------
+  //
+  // Preenchido pelo admin (aba Vídeos) via Worker; fica salvo como
+  // catalogo.json no mesmo bucket R2 dos vídeos. Aqui só sobrescrevemos os
+  // campos `url` (null por padrão) do PLATAFORMA_DADOS gerado.
+
+  function aplicarCatalogoVideos(catalogo) {
+    if (!catalogo) return;
+    PLATAFORMA_DADOS.grupos.forEach(function (grupo) {
+      grupo.itens.forEach(function (item) {
+        if (item.tipo !== "video" || item.videos.length !== 2) return;
+        var entrada = catalogo[item.id];
+        if (!entrada) return;
+        if (entrada.original) item.videos[0].url = entrada.original;
+        if (entrada.comentado) item.videos[1].url = entrada.comentado;
+      });
+    });
+  }
+
+  if (window.VIDEOS_PUBLIC_BASE_URL) {
+    fetch(window.VIDEOS_PUBLIC_BASE_URL.replace(/\/$/, "") + "/catalogo.json", { cache: "no-store" })
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .catch(function () { return null; })
+      .then(function (catalogo) {
+        if (!catalogo) return;
+        aplicarCatalogoVideos(catalogo);
+        renderSidebar();
+        renderMain();
+      });
+  }
 
   // ---------- Início ----------
 

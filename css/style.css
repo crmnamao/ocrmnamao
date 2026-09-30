@@ -2543,6 +2543,12 @@ section {
   color: var(--text);
 }
 
+.plat-video-descricao {
+  font-size: 12.5px;
+  color: var(--muted-2);
+  margin: -8px 0 12px;
+}
+
 .plat-video-player {
   width: 100%;
   border-radius: 8px;
@@ -3069,6 +3075,31 @@ body.plat-modal-aberto {
   color: var(--muted-2);
   text-align: center;
   padding: 40px 0;
+}
+
+.admin-video-classificar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-video-classificar select {
+  background: var(--bg-2);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-family: inherit;
+  max-width: 180px;
+}
+
+.admin-video-vinculado-ok {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--accent-2);
+  font-weight: 700;
 }
 
 .admin-modal-card {
