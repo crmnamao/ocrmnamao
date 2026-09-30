@@ -10,4 +10,4 @@
 // Quando o backend existir, a validação de quem é admin precisa acontecer
 // no servidor (Apps Script), não só aqui.
 
-window.ADMIN_EMAILS = ["leonardoac.alves2@gmail.com"];
+window.ADMIN_EMAILS = ["leonardoac.alves2@gmail.com", "contato@facilitandocrmnamao.com"];

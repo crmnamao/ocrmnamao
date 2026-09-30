@@ -14,6 +14,9 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    .header .header-inner {
+      justify-content: center;
+    }
     .login-page {
       min-height: 100vh;
       display: flex;
@@ -64,9 +67,35 @@
       margin-top: 28px;
       padding-top: 22px;
       border-top: 1px solid var(--card-border);
-      font-size: 12.5px;
+      font-size: 13px;
       color: var(--muted-2);
       line-height: 1.6;
+    }
+    .login-suporte-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #25d366;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .login-suporte-whatsapp:hover,
+    .login-suporte-whatsapp:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+    }
+    .login-suporte-whatsapp svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -94,10 +123,20 @@
       <p id="loginStatus" class="login-status" role="status"></p>
 
       <p class="login-pendente">
-        ⚠️ A plataforma já está no ar com o mecanismo de videoaulas, material de apoio e quiz
-        funcionando. O conteúdo completo (vídeos e questões de cada estação) ainda está sendo
-        adicionado edição por edição.
+        🔒 O acesso à plataforma é exclusivo para quem já adquiriu um dos nossos planos.
+        Se você comprou e está com alguma dúvida para entrar, fale com o nosso suporte.
       </p>
+      <a
+        class="login-suporte-whatsapp"
+        href="https://wa.me/5516997296208?text=Ol%C3%A1!%20Estou%20com%20d%C3%BAvida%20para%20acessar%20a%20plataforma%20da%20CRM%20na%20M%C3%A3o."
+        target="_blank"
+        rel="noopener"
+      >
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.385.694 4.611 1.885 6.476L4 29l7.716-1.862A11.94 11.94 0 0016 27c6.627 0 12-5.373 12-12S22.628 3 16.001 3zm0 21.818a9.77 9.77 0 01-5.02-1.377l-.36-.214-3.716.897.912-3.615-.235-.372A9.8 9.8 0 016.182 15c0-5.413 4.406-9.818 9.819-9.818 5.412 0 9.818 4.405 9.818 9.818 0 5.412-4.406 9.818-9.818 9.818zm5.377-7.34c-.294-.147-1.741-.859-2.011-.957-.27-.099-.467-.147-.663.147-.196.294-.76.957-.933 1.153-.172.196-.343.221-.637.074-.294-.147-1.242-.458-2.365-1.462-.874-.78-1.464-1.744-1.636-2.038-.172-.294-.018-.453.129-.6.132-.132.294-.343.441-.514.147-.172.196-.294.294-.49.098-.196.049-.368-.024-.515-.074-.147-.663-1.597-.909-2.187-.239-.575-.482-.497-.663-.506-.172-.008-.368-.01-.564-.01-.196 0-.515.074-.784.368-.27.294-1.03 1.006-1.03 2.454s1.054 2.847 1.201 3.043c.147.196 2.073 3.166 5.02 4.44.702.303 1.25.484 1.677.62.705.224 1.347.192 1.855.117.566-.084 1.741-.712 1.986-1.4.245-.688.245-1.278.172-1.4-.073-.122-.269-.196-.563-.343z" />
+        </svg>
+        Falar com o suporte
+      </a>
     </div>
   </section>
 

@@ -35,7 +35,13 @@
 
   var aluno = AlunosStore.buscarPorEmail(sessao.email) || AlunosStore.registrarPendente(sessao);
 
+  var ehAdmin = ADMIN_EMAILS.indexOf((sessao.email || "").toLowerCase()) !== -1;
+  if (ehAdmin && aluno.status !== "ativo") {
+    aluno = AlunosStore.atualizar(aluno.id, { status: "ativo" });
+  }
+
   function acessoLiberado(a) {
+    if (ehAdmin) return true;
     if (!a) return false;
     if (a.status !== "ativo") return false;
     if (a.dataExpiracao && new Date(a.dataExpiracao) < new Date()) return false;
