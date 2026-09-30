@@ -435,12 +435,12 @@
     return null;
   }
 
-  function gruposEdicao() {
-    return (window.PLATAFORMA_DADOS ? window.PLATAFORMA_DADOS.grupos : []).filter(function (g) { return g.tipo === "edicao"; });
+  function gruposClassificaveis() {
+    return window.PLATAFORMA_DADOS ? window.PLATAFORMA_DADOS.grupos : [];
   }
 
   function estacoesDoGrupo(grupoId) {
-    var grupo = gruposEdicao().filter(function (g) { return g.id === grupoId; })[0];
+    var grupo = gruposClassificaveis().filter(function (g) { return g.id === grupoId; })[0];
     if (!grupo) return [];
     return grupo.itens.filter(function (i) { return i.tipo === "video"; });
   }
@@ -542,23 +542,30 @@
     return rascunhosClassificacao[item.id];
   }
 
+  function estacaoPorId(grupoId, itemId) {
+    return estacoesDoGrupo(grupoId).filter(function (i) { return i.id === itemId; })[0] || null;
+  }
+
   function renderLinhaBiblioteca(item) {
     var d = draftDe(item);
     var opcoesAno = '<option value="">Ano</option>' +
-      gruposEdicao().map(function (g) {
+      gruposClassificaveis().map(function (g) {
         return '<option value="' + escapeHtml(g.id) + '"' + (d.grupoId === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + "</option>";
       }).join("");
 
     var estacoes = d.grupoId ? estacoesDoGrupo(d.grupoId) : [];
-    var opcoesEstacao = '<option value="">' + (d.grupoId ? "Estação" : "Escolha o ano") + '</option>' +
+    var opcoesEstacao = '<option value="">' + (d.grupoId ? "Estação/Aula" : "Escolha o ano") + '</option>' +
       estacoes.map(function (i) {
         return '<option value="' + escapeHtml(i.id) + '"' + (d.itemId === i.id ? " selected" : "") + '>' + escapeHtml(i.titulo) + "</option>";
       }).join("");
 
-    var grupoAtual = item.grupoId ? gruposEdicao().filter(function (g) { return g.id === item.grupoId; })[0] : null;
-    var estacaoAtual = (item.grupoId && item.itemId) ? estacoesDoGrupo(item.grupoId).filter(function (i) { return i.id === item.itemId; })[0] : null;
+    var estacaoSelecionada = d.grupoId && d.itemId ? estacaoPorId(d.grupoId, d.itemId) : null;
+    var precisaTipo = !estacaoSelecionada || estacaoSelecionada.videos.length === 2;
+
+    var grupoAtual = item.grupoId ? gruposClassificaveis().filter(function (g) { return g.id === item.grupoId; })[0] : null;
+    var estacaoAtual = (item.grupoId && item.itemId) ? estacaoPorId(item.grupoId, item.itemId) : null;
     var vinculoAtual = (grupoAtual && estacaoAtual)
-      ? grupoAtual.titulo + " — " + estacaoAtual.titulo + " — " + ROTULO_TIPO_VIDEO[item.tipo]
+      ? grupoAtual.titulo + " — " + estacaoAtual.titulo + (estacaoAtual.videos.length === 2 ? " — " + ROTULO_TIPO_VIDEO[item.tipo] : "")
       : "Não vinculado";
 
     return (
@@ -578,10 +585,12 @@
           '<div class="admin-video-classificar" data-id="' + escapeHtml(item.id) + '">' +
             '<select class="videoSelectAno" data-id="' + escapeHtml(item.id) + '">' + opcoesAno + "</select>" +
             '<select class="videoSelectEstacao" data-id="' + escapeHtml(item.id) + '"' + (!d.grupoId ? " disabled" : "") + '>' + opcoesEstacao + "</select>" +
-            '<select class="videoSelectTipo" data-id="' + escapeHtml(item.id) + '">' +
-              '<option value="original"' + (d.tipo === "original" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.original + "</option>" +
-              '<option value="comentado"' + (d.tipo === "comentado" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.comentado + "</option>" +
-            "</select>" +
+            (precisaTipo
+              ? '<select class="videoSelectTipo" data-id="' + escapeHtml(item.id) + '">' +
+                  '<option value="original"' + (d.tipo === "original" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.original + "</option>" +
+                  '<option value="comentado"' + (d.tipo === "comentado" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.comentado + "</option>" +
+                "</select>"
+              : "") +
             '<button type="button" class="admin-link videoBtnSalvar" data-id="' + escapeHtml(item.id) + '">Salvar</button>' +
             (grupoAtual ? '<button type="button" class="admin-link admin-link-remover videoBtnDesvincular" data-id="' + escapeHtml(item.id) + '">Desvincular</button>' : "") +
           "</div>" +
@@ -600,12 +609,13 @@
     var vinculado = buscarRegistroVinculado(estacao.id, tipo);
     var chaveSlot = estacao.id + "|" + tipo;
     var trocando = slotsEmEdicao[chaveSlot];
-    var rotuloTipo = ROTULO_TIPO_VIDEO[tipo];
+    var mostrarSufixoTipo = estacao.videos.length === 2;
+    var tituloSlot = estacao.titulo + (mostrarSufixoTipo ? " — " + ROTULO_TIPO_VIDEO[tipo] : "");
 
     if (vinculado && !trocando) {
       return (
         '<div class="admin-slot-video">' +
-          '<p class="admin-slot-titulo">' + escapeHtml(estacao.titulo) + " — " + rotuloTipo + "</p>" +
+          '<p class="admin-slot-titulo">' + escapeHtml(tituloSlot) + "</p>" +
           '<a class="admin-slot-atual" href="' + escapeHtml(vinculado.url) + '" target="_blank" rel="noopener">' + escapeHtml(vinculado.nomeArquivo) + "</a>" +
           '<button type="button" class="admin-link slotBtnTrocar" data-slot="' + escapeHtml(chaveSlot) + '">Substituir</button>' +
         "</div>"
@@ -617,7 +627,7 @@
 
     return (
       '<div class="admin-slot-video">' +
-        '<p class="admin-slot-titulo">' + escapeHtml(estacao.titulo) + " — " + rotuloTipo + "</p>" +
+        '<p class="admin-slot-titulo">' + escapeHtml(tituloSlot) + "</p>" +
         (vinculado ? '<p class="admin-slot-substituindo">Substituindo: ' + escapeHtml(vinculado.nomeArquivo) + "</p>" : "") +
         '<select class="slotSelectExistente" data-grupo="' + escapeHtml(grupoId) + '" data-item="' + escapeHtml(estacao.id) + '" data-tipo="' + tipo + '">' + opcoesExistentes + "</select>" +
         '<div class="admin-slot-novo">' +
@@ -634,19 +644,19 @@
     if (!elGrade) return;
 
     var grupoId = filtroAnoBiblioteca;
-    var grupo = gruposEdicao().filter(function (g) { return g.id === grupoId; })[0];
+    var grupo = gruposClassificaveis().filter(function (g) { return g.id === grupoId; })[0];
     if (!grupo) { elGrade.innerHTML = ""; return; }
 
     var estacoes = estacoesDoGrupo(grupoId);
 
     elGrade.innerHTML =
-      '<div class="admin-cabecalho" style="margin-top:0;"><h2>Importar direto nas estações de ' + escapeHtml(grupo.titulo) + "</h2></div>" +
+      '<div class="admin-cabecalho" style="margin-top:0;"><h2>Importar direto em ' + escapeHtml(grupo.titulo) + "</h2></div>" +
       '<div class="admin-grade-importacao">' +
         estacoes.map(function (estacao) {
           return (
             '<div class="admin-grade-estacao">' +
               renderSlotVideo(grupoId, estacao, "original") +
-              renderSlotVideo(grupoId, estacao, "comentado") +
+              (estacao.videos.length === 2 ? renderSlotVideo(grupoId, estacao, "comentado") : "") +
             "</div>"
           );
         }).join("") +
@@ -659,7 +669,7 @@
     elFiltro.innerHTML =
       '<option value="todos"' + (filtroAnoBiblioteca === "todos" ? " selected" : "") + '>Todos os vídeos (' + biblioteca.length + ")</option>" +
       '<option value="nao-vinculados"' + (filtroAnoBiblioteca === "nao-vinculados" ? " selected" : "") + '>Não vinculados (' + biblioteca.filter(function (v) { return !v.itemId; }).length + ")</option>" +
-      gruposEdicao().map(function (g) {
+      gruposClassificaveis().map(function (g) {
         var qtd = biblioteca.filter(function (v) { return v.grupoId === g.id; }).length;
         return '<option value="' + escapeHtml(g.id) + '"' + (filtroAnoBiblioteca === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + " (" + qtd + ")</option>";
       }).join("");
@@ -752,15 +762,18 @@
   async function salvarClassificacaoBiblioteca(id, botao) {
     var draft = rascunhosClassificacao[id];
     if (!draft || !draft.grupoId || !draft.itemId) {
-      window.alert("Escolha o ano e a estação antes de salvar.");
+      window.alert("Escolha o ano e a estação/aula antes de salvar.");
       return;
     }
+
+    var estacaoAlvo = estacaoPorId(draft.grupoId, draft.itemId);
+    var tipoFinal = (estacaoAlvo && estacaoAlvo.videos.length === 1) ? "original" : draft.tipo;
 
     botao.disabled = true;
     botao.textContent = "Salvando...";
 
     try {
-      await classificarRaw(id, draft.grupoId, draft.itemId, draft.tipo);
+      await classificarRaw(id, draft.grupoId, draft.itemId, tipoFinal);
       delete rascunhosClassificacao[id];
     } catch (erro) {
       window.alert("Não deu pra salvar agora: " + (erro && erro.message ? erro.message : erro));
@@ -876,7 +889,7 @@
       '<div id="videoFilaLista"></div>' +
       '<div class="admin-cabecalho" style="margin-top:36px;"><h1>Biblioteca de vídeos</h1></div>' +
       '<div class="admin-modal-campo admin-biblioteca-filtro">' +
-        '<label>Filtrar por ano</label>' +
+        '<label>Filtrar por grupo</label>' +
         '<select id="bibliotecaFiltroAno"></select>' +
       "</div>" +
       '<div id="bibliotecaGrade"></div>' +
@@ -944,6 +957,9 @@
         renderBiblioteca();
       } else if (ev.target.classList.contains("videoSelectEstacao")) {
         draft.itemId = ev.target.value;
+        var estacaoEscolhida = draft.grupoId && draft.itemId ? estacaoPorId(draft.grupoId, draft.itemId) : null;
+        if (estacaoEscolhida && estacaoEscolhida.videos.length === 1) draft.tipo = "original";
+        renderBiblioteca();
       } else if (ev.target.classList.contains("videoSelectTipo")) {
         draft.tipo = ev.target.value;
       }

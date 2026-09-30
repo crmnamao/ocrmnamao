@@ -562,11 +562,13 @@
     if (!catalogo) return;
     PLATAFORMA_DADOS.grupos.forEach(function (grupo) {
       grupo.itens.forEach(function (item) {
-        if (item.tipo !== "video" || item.videos.length !== 2) return;
+        if (item.tipo !== "video") return;
         var entrada = catalogo[item.id];
         if (!entrada) return;
+        // Estações com 2 vídeos (Revalida): slot 0 = original, slot 1 = comentado.
+        // Itens com 1 vídeo (Esqueletos, Aulas com Especialistas): só usa "original".
         if (entrada.original) item.videos[0].url = entrada.original;
-        if (entrada.comentado) item.videos[1].url = entrada.comentado;
+        if (entrada.comentado && item.videos[1]) item.videos[1].url = entrada.comentado;
       });
     });
   }
