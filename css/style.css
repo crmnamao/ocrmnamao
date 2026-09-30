@@ -728,12 +728,12 @@ section {
    fotos originais do que o resto da equipe -- aproxima (zoom a partir da
    base) pra ficarem proporcionais aos demais cards. */
 .team-card-photo img[src*="team-sergio"] {
-  transform: scale(1.35);
+  transform: scale(1.15);
   transform-origin: bottom center;
 }
 
 .team-card-photo img[src*="team-pricila"] {
-  transform: scale(1.4);
+  transform: scale(1.18);
   transform-origin: bottom center;
 }
 
