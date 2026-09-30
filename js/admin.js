@@ -78,7 +78,9 @@
 
   // ---------- Estado ----------
 
-  var estado = { filtroStatus: "todos", busca: "" };
+  var estado = { view: "alunos", filtroStatus: "todos", busca: "" };
+  var cacheFeedback = [];
+  var cacheAvisos = [];
 
   function alunoDeCadaEmail() {
     return AlunosStore.listar();
@@ -102,9 +104,38 @@
     return !!aluno.dataExpiracao && new Date(aluno.dataExpiracao) < new Date();
   }
 
-  // ---------- Render principal ----------
+  // ---------- Render principal (seletor de view + delega pra cada aba) ----------
 
   function renderAdmin() {
+    var abasView = [
+      { chave: "alunos", rotulo: "Alunos" },
+      { chave: "feedbacks", rotulo: "Feedbacks" },
+      { chave: "avisos", rotulo: "Avisos" }
+    ];
+    elMain.innerHTML =
+      '<div class="admin-view-switch">' +
+        abasView.map(function (v) {
+          return '<button type="button" class="admin-view-tab ' + (estado.view === v.chave ? "is-ativa" : "") + '" data-view="' + v.chave + '">' + v.rotulo + "</button>";
+        }).join("") +
+      "</div>" +
+      '<div id="adminViewBody"></div>';
+
+    elMain.querySelectorAll(".admin-view-tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        estado.view = btn.getAttribute("data-view");
+        renderAdmin();
+      });
+    });
+
+    if (estado.view === "feedbacks") renderFeedbacksView();
+    else if (estado.view === "avisos") renderAvisosView();
+    else renderAlunosView();
+  }
+
+  // ---------- View: Alunos ----------
+
+  function renderAlunosView() {
+    var elViewBody = document.getElementById("adminViewBody");
     var todos = alunoDeCadaEmail();
     var contagens = {
       todos: todos.length,
@@ -171,40 +202,204 @@
           "</tbody></table></div>";
     }
 
-    elMain.innerHTML = html;
+    elViewBody.innerHTML = html;
 
     document.getElementById("btnNovoAluno").addEventListener("click", function () { abrirModalAluno(null); });
 
-    elMain.querySelectorAll(".admin-aba").forEach(function (btn) {
+    elViewBody.querySelectorAll(".admin-aba").forEach(function (btn) {
       btn.addEventListener("click", function () {
         estado.filtroStatus = btn.getAttribute("data-filtro");
-        renderAdmin();
+        renderAlunosView();
       });
     });
 
     var elBusca = document.getElementById("adminBusca");
     elBusca.addEventListener("input", function () {
       estado.busca = elBusca.value;
-      renderAdmin();
+      renderAlunosView();
       var novoInput = document.getElementById("adminBusca");
       novoInput.focus();
       novoInput.setSelectionRange(novoInput.value.length, novoInput.value.length);
     });
 
-    elMain.querySelectorAll('[data-acao="editar"]').forEach(function (btn) {
+    elViewBody.querySelectorAll('[data-acao="editar"]').forEach(function (btn) {
       btn.addEventListener("click", function () { abrirModalAluno(btn.getAttribute("data-id")); });
     });
-    elMain.querySelectorAll('[data-acao="historico"]').forEach(function (btn) {
+    elViewBody.querySelectorAll('[data-acao="historico"]').forEach(function (btn) {
       btn.addEventListener("click", function () { abrirModalHistorico(btn.getAttribute("data-id")); });
     });
-    elMain.querySelectorAll('[data-acao="remover"]').forEach(function (btn) {
+    elViewBody.querySelectorAll('[data-acao="remover"]').forEach(function (btn) {
       btn.addEventListener("click", function () {
         var aluno = AlunosStore.buscarPorId(btn.getAttribute("data-id"));
         if (!aluno) return;
         if (window.confirm('Remover "' + aluno.nome + '" (' + aluno.email + ")? Essa ação não pode ser desfeita.")) {
           AlunosStore.remover(aluno.id);
-          renderAdmin();
+          renderAlunosView();
         }
+      });
+    });
+  }
+
+  // ---------- View: Feedbacks ----------
+
+  var FEEDBACK_STATUS_LABELS = { "Aberto": "Aberto", "Respondido": "Respondido" };
+
+  function renderFeedbacksView() {
+    var elViewBody = document.getElementById("adminViewBody");
+    elViewBody.innerHTML = '<p class="admin-vazio">Carregando feedbacks...</p>';
+
+    window.FeedbackAPI.listarAdmin().then(function (resultado) {
+      if (estado.view !== "feedbacks") return; // usuário já trocou de aba
+      if (!resultado || !resultado.ok) {
+        elViewBody.innerHTML = '<p class="admin-vazio">Não foi possível carregar os feedbacks agora. Confira se o Apps Script já foi reimplantado com as abas novas.</p>';
+        return;
+      }
+      cacheFeedback = resultado.itens.sort(function (a, b) { return new Date(b.dataHora) - new Date(a.dataHora); });
+
+      if (!cacheFeedback.length) {
+        elViewBody.innerHTML = '<p class="admin-vazio">Nenhum feedback recebido ainda.</p>';
+        return;
+      }
+
+      elViewBody.innerHTML =
+        '<div class="admin-tabela-wrap"><table class="admin-tabela">' +
+          "<thead><tr><th>Nome</th><th>E-mail</th><th>Categoria</th><th>Mensagem</th><th>Status</th><th>Data</th><th></th></tr></thead>" +
+          "<tbody>" +
+          cacheFeedback.map(function (f) {
+            return (
+              "<tr>" +
+                "<td>" + escapeHtml(f.nome) + "</td>" +
+                "<td>" + escapeHtml(f.email) + "</td>" +
+                "<td>" + escapeHtml(f.categoria) + "</td>" +
+                "<td>" + escapeHtml((f.mensagem || "").slice(0, 60)) + ((f.mensagem || "").length > 60 ? "…" : "") + "</td>" +
+                '<td><span class="admin-status admin-status-' + (f.status === "Respondido" ? "ativo" : "pendente") + '">' + (FEEDBACK_STATUS_LABELS[f.status] || f.status) + "</span></td>" +
+                "<td>" + new Date(f.dataHora).toLocaleDateString("pt-BR") + "</td>" +
+                '<td class="admin-acoes"><button type="button" class="admin-link" data-id="' + f.id + '">' + (f.status === "Respondido" ? "Ver / editar resposta" : "Responder") + "</button></td>" +
+              "</tr>"
+            );
+          }).join("") +
+          "</tbody></table></div>";
+
+      elViewBody.querySelectorAll("[data-id]").forEach(function (btn) {
+        btn.addEventListener("click", function () { abrirModalResponderFeedback(btn.getAttribute("data-id")); });
+      });
+    });
+  }
+
+  function abrirModalResponderFeedback(id) {
+    var item = cacheFeedback.find(function (f) { return f.id === id; });
+    if (!item) return;
+
+    var html =
+      '<div class="admin-modal-card">' +
+        '<div class="admin-modal-topo">' +
+          "<h2>Feedback de " + escapeHtml(item.nome) + "</h2>" +
+          '<button type="button" class="quiz-modal-fechar" id="modalFechar" aria-label="Fechar">✕</button>' +
+        "</div>" +
+        '<p class="admin-modal-ajuda"><strong>' + escapeHtml(item.categoria) + '</strong> · ' + escapeHtml(item.email) + " · " + new Date(item.dataHora).toLocaleString("pt-BR") + "</p>" +
+        '<div class="admin-modal-campo"><label>Mensagem do aluno</label><p class="admin-feedback-mensagem">' + escapeHtml(item.mensagem) + "</p></div>" +
+        '<div class="admin-modal-campo">' +
+          "<label>Sua resposta</label>" +
+          '<textarea id="campoResposta" rows="5">' + escapeHtml(item.resposta || "") + "</textarea>" +
+        "</div>" +
+        '<div class="admin-modal-acoes">' +
+          '<button type="button" class="btn btn-plan-outline" id="modalCancelar">Cancelar</button>' +
+          '<button type="button" class="btn btn-plan" id="modalResponder">Enviar resposta</button>' +
+        "</div>" +
+      "</div>";
+
+    elModalOverlay.innerHTML = html;
+    elModalOverlay.hidden = false;
+    document.body.classList.add("plat-modal-aberto");
+    document.getElementById("modalFechar").addEventListener("click", fecharModal);
+    document.getElementById("modalCancelar").addEventListener("click", fecharModal);
+    document.getElementById("modalResponder").addEventListener("click", function () {
+      var resposta = document.getElementById("campoResposta").value.trim();
+      if (!resposta) { window.alert("Escreva uma resposta antes de enviar."); return; }
+      var botao = document.getElementById("modalResponder");
+      botao.disabled = true;
+      botao.textContent = "Enviando...";
+      window.FeedbackAPI.responder(item.id, resposta).then(function (resultado) {
+        if (!resultado || !resultado.ok) {
+          window.alert("Não deu pra enviar a resposta agora. Tente de novo.");
+          botao.disabled = false;
+          botao.textContent = "Enviar resposta";
+          return;
+        }
+        fecharModal();
+        renderFeedbacksView();
+      });
+    });
+  }
+
+  // ---------- View: Avisos ----------
+
+  function renderAvisosView() {
+    var elViewBody = document.getElementById("adminViewBody");
+    elViewBody.innerHTML = '<p class="admin-vazio">Carregando avisos...</p>';
+
+    window.FeedbackAPI.listarAvisos(true).then(function (resultado) {
+      if (estado.view !== "avisos") return;
+      cacheAvisos = (resultado && resultado.ok) ? resultado.itens.sort(function (a, b) { return new Date(b.dataHora) - new Date(a.dataHora); }) : [];
+
+      var html =
+        '<div class="admin-cabecalho"><h1>Avisos aos alunos</h1></div>' +
+        '<div class="admin-modal-campo">' +
+          '<label>Título</label><input type="text" id="avisoTitulo" placeholder="Ex: Nova edição liberada" />' +
+        "</div>" +
+        '<div class="admin-modal-campo">' +
+          '<label>Mensagem</label><textarea id="avisoMensagem" rows="3" placeholder="Ex: Já liberamos as aulas da edição 2026.1!"></textarea>' +
+        "</div>" +
+        '<button type="button" class="btn btn-plan" id="avisoCriar">Publicar aviso</button>';
+
+      if (!resultado || !resultado.ok) {
+        html += '<p class="admin-vazio" style="margin-top:20px;">Não foi possível carregar os avisos existentes agora. Confira se o Apps Script já foi reimplantado com as abas novas.</p>';
+      } else if (!cacheAvisos.length) {
+        html += '<p class="admin-vazio" style="margin-top:20px;">Nenhum aviso publicado ainda.</p>';
+      } else {
+        html +=
+          '<div class="admin-tabela-wrap" style="margin-top:24px;"><table class="admin-tabela">' +
+            "<thead><tr><th>Título</th><th>Mensagem</th><th>Data</th><th>Status</th><th></th></tr></thead>" +
+            "<tbody>" +
+            cacheAvisos.map(function (a) {
+              return (
+                "<tr>" +
+                  "<td>" + escapeHtml(a.titulo) + "</td>" +
+                  "<td>" + escapeHtml((a.mensagem || "").slice(0, 60)) + ((a.mensagem || "").length > 60 ? "…" : "") + "</td>" +
+                  "<td>" + new Date(a.dataHora).toLocaleDateString("pt-BR") + "</td>" +
+                  '<td><span class="admin-status admin-status-' + (a.ativo ? "ativo" : "removido") + '">' + (a.ativo ? "Ativo" : "Desativado") + "</span></td>" +
+                  '<td class="admin-acoes">' + (a.ativo ? '<button type="button" class="admin-link admin-link-remover" data-id="' + a.id + '">Desativar</button>' : "") + "</td>" +
+                "</tr>"
+              );
+            }).join("") +
+            "</tbody></table></div>";
+      }
+
+      elViewBody.innerHTML = html;
+
+      document.getElementById("avisoCriar").addEventListener("click", function () {
+        var titulo = document.getElementById("avisoTitulo").value.trim();
+        var mensagem = document.getElementById("avisoMensagem").value.trim();
+        if (!titulo || !mensagem) { window.alert("Preencha título e mensagem."); return; }
+        var botao = document.getElementById("avisoCriar");
+        botao.disabled = true;
+        botao.textContent = "Publicando...";
+        window.FeedbackAPI.criarAviso(titulo, mensagem).then(function (resultado2) {
+          if (!resultado2 || !resultado2.ok) {
+            window.alert("Não deu pra publicar agora. Tente de novo.");
+            botao.disabled = false;
+            botao.textContent = "Publicar aviso";
+            return;
+          }
+          renderAvisosView();
+        });
+      });
+
+      elViewBody.querySelectorAll(".admin-link-remover[data-id]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!window.confirm("Desativar este aviso? Ele deixa de aparecer pros alunos.")) return;
+          window.FeedbackAPI.desativarAviso(btn.getAttribute("data-id")).then(function () { renderAvisosView(); });
+        });
       });
     });
   }
@@ -350,32 +545,41 @@
     var totalQuizzesFeitos = 0;
     var somaMelhorAproveitamento = 0;
 
-    (window.PLATAFORMA_DADOS ? PLATAFORMA_DADOS.edicoes : []).forEach(function (edicao) {
-      var linhasEstacoes = [];
-      edicao.estacoes.forEach(function (est) {
-        var p = progresso[est.id];
+    (window.PLATAFORMA_DADOS ? PLATAFORMA_DADOS.grupos : []).forEach(function (grupo) {
+      var linhasItens = [];
+      grupo.itens.forEach(function (item) {
+        var p = progresso[item.id];
         if (!p) return;
-        var videosAssistidos = (p.videos || []).filter(Boolean).length;
-        var totalVideos = est.videos.length;
-        if (videosAssistidos === totalVideos) totalEstacoesConcluidas += 1;
-        var quiz = p.quiz || { tentativas: 0 };
-        if (quiz.tentativas > 0) {
+        if (item.tipo === "quiz") {
+          var quiz = p.quiz || { tentativas: 0 };
+          if (quiz.tentativas === 0) return;
           totalQuizzesFeitos += 1;
           somaMelhorAproveitamento += quiz.totalPerguntas ? (quiz.melhorAcertos / quiz.totalPerguntas) : 0;
+          linhasItens.push(
+            "<tr>" +
+              "<td>" + escapeHtml(item.titulo) + "</td>" +
+              "<td>Quiz</td>" +
+              "<td>Melhor: " + quiz.melhorAcertos + "/" + quiz.totalPerguntas + " · " + quiz.tentativas + " tentativa(s)</td>" +
+            "</tr>"
+          );
+          return;
         }
-        linhasEstacoes.push(
+        var videosAssistidos = (p.videos || []).filter(Boolean).length;
+        var totalVideos = item.videos.length;
+        if (p.concluida) totalEstacoesConcluidas += 1;
+        linhasItens.push(
           "<tr>" +
-            "<td>Estação " + est.numero + "</td>" +
+            "<td>" + escapeHtml(item.titulo) + "</td>" +
             "<td>" + videosAssistidos + "/" + totalVideos + " vídeos</td>" +
-            "<td>" + (quiz.tentativas > 0 ? ("Melhor: " + quiz.melhorAcertos + "/" + quiz.totalPerguntas + " · " + quiz.tentativas + " tentativa(s)") : "Não fez o quiz") + "</td>" +
+            "<td>" + (p.concluida ? "✓ Concluída" : "Em andamento") + "</td>" +
           "</tr>"
         );
       });
-      if (linhasEstacoes.length) {
+      if (linhasItens.length) {
         linhasEdicoes.push(
           '<div class="admin-historico-edicao">' +
-            "<h3>" + escapeHtml(edicao.titulo) + "</h3>" +
-            '<table class="admin-tabela admin-tabela-compacta"><tbody>' + linhasEstacoes.join("") + "</tbody></table>" +
+            "<h3>" + escapeHtml(grupo.titulo) + "</h3>" +
+            '<table class="admin-tabela admin-tabela-compacta"><tbody>' + linhasItens.join("") + "</tbody></table>" +
           "</div>"
         );
       }

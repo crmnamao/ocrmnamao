@@ -22,12 +22,32 @@
       <span class="brand-name">CRM na Mão</span>
     </a>
 
+    <nav class="nav plat-nav" aria-label="Navegação do site">
+      <a href="index.html">Início</a>
+      <a href="index.html#planos">Planos</a>
+      <a href="index.html#perguntas">Dúvidas frequentes</a>
+    </nav>
+
     <div class="plat-usuario">
+      <button type="button" class="plat-btn-feedback" id="btnAbrirFeedback">Fale com a gente</button>
+
+      <div class="plat-notif" id="notifWrapper">
+        <button type="button" class="plat-notif-sino" id="btnNotificacoes" aria-label="Notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9.5a6 6 0 0112 0c0 4.2 1.2 5.6 1.9 6.3.3.3.1.9-.4.9H4.5c-.5 0-.7-.6-.4-.9.7-.7 1.9-2.1 1.9-6.3z" />
+            <path d="M10 19a2 2 0 004 0" />
+          </svg>
+          <span class="plat-notif-badge" id="notifBadge" hidden>0</span>
+        </button>
+        <div class="plat-notif-painel" id="notifPainel" hidden></div>
+      </div>
+
       <div class="plat-avatar" id="userAvatar"></div>
       <div class="plat-usuario-info">
         <span class="plat-usuario-nome" id="userNome"></span>
         <span class="plat-usuario-email" id="userEmail"></span>
       </div>
+      <button type="button" class="plat-btn-sair" id="btnAbrirPerfil">Meu perfil</button>
       <button type="button" class="plat-btn-sair" id="btnSair">Sair</button>
     </div>
   </header>
@@ -41,9 +61,17 @@
   <!-- ===== MODAL DO QUIZ ===== -->
   <div class="quiz-overlay" id="quizOverlay" hidden></div>
 
+  <!-- ===== MODAL DO PERFIL ===== -->
+  <div class="quiz-overlay" id="perfilOverlay" hidden></div>
+
+  <!-- ===== MODAL DO FEEDBACK ===== -->
+  <div class="quiz-overlay" id="feedbackOverlay" hidden></div>
+
   <script src="js/admin-config.js"></script>
   <script src="js/plataforma-dados.js"></script>
   <script src="js/alunos-store.js"></script>
+  <script src="js/feedback-store.js"></script>
   <script src="js/plataforma.js"></script>
+  <script src="js/plataforma-extra.js"></script>
 </body>
 </html>

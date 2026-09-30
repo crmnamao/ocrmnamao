@@ -42,6 +42,30 @@ const ABA_DASHBOARD = "Dashboard";
 const ABA_DADOS_GRAFICOS = "Dados (não editar)"; // aba oculta, só com tabelas de apoio pros gráficos
 const ABA_NOVO_LEAD = "Adicionar Lead Manual";
 
+// aba própria pro sistema de feedback/dúvidas da Plataforma do Aluno
+// (site/plataforma.html) -- SEPARADA da Leads de propósito, pra não misturar
+// dado de pagamento com mensagem de aluno. Alimentada pelos novos ramos de
+// doPost() com tipo "feedback-*" (ver mais abaixo) e lida pelo painel admin
+// (site/admin.html, aba "Feedbacks") e pela própria plataforma do aluno
+// (pra saber se a resposta do admin já chegou).
+const ABA_FEEDBACK = "Feedback";
+const CABECALHOS_FEEDBACK = [
+  "ID", "Data/Hora", "Nome", "E-mail", "Categoria", "Mensagem",
+  "Status", "Resposta", "Data da Resposta", "Lido pelo Aluno"
+];
+const COL_FEEDBACK_STATUS = 7; // G
+const COL_FEEDBACK_RESPOSTA = 8; // H
+const COL_FEEDBACK_DATA_RESPOSTA = 9; // I
+const COL_FEEDBACK_LIDO = 10; // J
+
+// aba de avisos/novidades gerais da plataforma (ex: "lançamos as aulas da
+// edição 2026.1") -- broadcast pra todos os alunos, sem vínculo com um
+// e-mail específico (diferente da Feedback). Também alimentada e lida só
+// via doPost com tipo "aviso-*".
+const ABA_AVISOS = "Avisos";
+const CABECALHOS_AVISOS = ["ID", "Data/Hora", "Título", "Mensagem", "Ativo"];
+const COL_AVISO_ATIVO = 5; // E
+
 // abas de controle pros leads de "Outros Produtos" -- todo lead cujo Plano
 // (coluna J da Leads) NÃO bate com nenhum nome cadastrado em PRODUTOS. É o
 // caso, hoje, dos leads vindos do formulário de cadastro personalizado
@@ -325,6 +349,8 @@ function setupPlanilha() {
   });
   criarAbaOutrosProdutos(ss);
   criarAbaOutrosProdutosAguardando(ss);
+  criarAbaFeedback(ss);
+  criarAbaAvisos(ss);
   criarAbaDadosGraficos(ss);
   criarAbaDashboard(ss);
   criarAbaNovoLeadManual(ss);
@@ -733,6 +759,54 @@ function criarAbaLeads(ss) {
     `IF(REGEXMATCH(TO_TEXT(J2:J);"(?i)premium");"Premium";` +
     `IF(REGEXMATCH(TO_TEXT(J2:J);"(?i)expresso");"Expresso";"Outro"))))))`;
   sh.getRange(2, COL_CATEGORIA).setFormula(formulaCategoria);
+}
+
+// aba própria do sistema de feedback da Plataforma do Aluno -- ver comentário
+// de ABA_FEEDBACK, mais acima. Estrutura simples de propósito (sem QUERY,
+// sem abas "Aguardando"/"Aprovados" por produto): é só uma lista, lida e
+// escrita inteira via doPost/JSON, não pensada pra edição manual na planilha.
+function criarAbaFeedback(ss) {
+  let sh = ss.getSheetByName(ABA_FEEDBACK);
+  if (!sh) sh = ss.insertSheet(ABA_FEEDBACK);
+
+  if (sh.getLastRow() > 1) return; // já tem feedback real -- não apaga
+
+  sh.clear();
+  limparBandings(sh);
+  sh.setTabColor(COR_NAVY);
+
+  const numColunas = CABECALHOS_FEEDBACK.length;
+  sh.getRange(1, 1, 1, numColunas).setValues([CABECALHOS_FEEDBACK]);
+  estilizarCabecalhoTabela(sh.getRange(1, 1, 1, numColunas));
+  sh.setFrozenRows(1);
+  sh.setRowHeight(1, 32);
+  aplicarZebra(sh, sh.getRange(2, 1, 1999, numColunas));
+  sh.getRange(2, 2, 1999, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+  sh.getRange(2, COL_FEEDBACK_DATA_RESPOSTA, 1999, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+  sh.getRange(2, COL_FEEDBACK_LIDO, 1999, 1).insertCheckboxes();
+  sh.autoResizeColumns(1, numColunas);
+}
+
+// aba de avisos/novidades -- ver comentário de ABA_AVISOS, mais acima.
+function criarAbaAvisos(ss) {
+  let sh = ss.getSheetByName(ABA_AVISOS);
+  if (!sh) sh = ss.insertSheet(ABA_AVISOS);
+
+  if (sh.getLastRow() > 1) return; // já tem aviso real -- não apaga
+
+  sh.clear();
+  limparBandings(sh);
+  sh.setTabColor(COR_NAVY);
+
+  const numColunas = CABECALHOS_AVISOS.length;
+  sh.getRange(1, 1, 1, numColunas).setValues([CABECALHOS_AVISOS]);
+  estilizarCabecalhoTabela(sh.getRange(1, 1, 1, numColunas));
+  sh.setFrozenRows(1);
+  sh.setRowHeight(1, 32);
+  aplicarZebra(sh, sh.getRange(2, 1, 1999, numColunas));
+  sh.getRange(2, 2, 1999, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+  sh.getRange(2, COL_AVISO_ATIVO, 1999, 1).insertCheckboxes();
+  sh.autoResizeColumns(1, numColunas);
 }
 
 function criarAbaPainel(ss) {
@@ -2125,6 +2199,134 @@ function inserirLeadManual(shManual, ss) {
   SpreadsheetApp.getActiveSpreadsheet().toast(`Lead "${nome}" criado com sucesso!`, "Pronto", 5);
 }
 
+// ============================================================
+// FEEDBACK E AVISOS -- Plataforma do Aluno (site/plataforma.html +
+// site/admin.html). Ver ABA_FEEDBACK/ABA_AVISOS mais acima. Tudo aqui é
+// chamado só pelos ramos "feedback-*"/"aviso-*" de doPost(), nunca editado
+// manualmente na planilha.
+// ============================================================
+
+// acha a linha (1-indexada) de um ID numa aba genérica cuja coluna A é o ID
+// -- mesma lógica de encontrarLinhaLeadPorId(), mas reaproveitável pra
+// qualquer aba (Feedback, Avisos), não só Leads.
+function encontrarLinhaPorId(sh, id) {
+  const dados = sh.getDataRange().getValues();
+  for (let i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]) === String(id)) return i + 1;
+  }
+  return -1;
+}
+
+function linhaParaFeedback(linha) {
+  return {
+    id: linha[0],
+    dataHora: linha[1] instanceof Date ? linha[1].toISOString() : linha[1],
+    nome: linha[2],
+    email: linha[3],
+    categoria: linha[4],
+    mensagem: linha[5],
+    status: linha[6],
+    resposta: linha[7],
+    dataResposta: linha[8] instanceof Date ? linha[8].toISOString() : linha[8],
+    lidoPeloAluno: linha[9] === true,
+  };
+}
+
+function registrarFeedback(sh, dados) {
+  const id = Utilities.getUuid().slice(0, 8);
+  const linha = proximaLinhaVaziaPorId(sh);
+  sh.getRange(linha, 1, 1, CABECALHOS_FEEDBACK.length).setValues([[
+    id,
+    new Date(),
+    dados.nome || "",
+    dados.email || "",
+    dados.categoria || "Dúvida",
+    dados.mensagem || "",
+    "Aberto",
+    "",
+    "",
+    true, // "lido pelo aluno" -- nasce true (nada pra ele ver ainda, só respondida fica não-lida)
+  ]]);
+  return { ok: true, id: id };
+}
+
+function listarFeedbackTudo(sh) {
+  const dados = sh.getDataRange().getValues();
+  const itens = [];
+  for (let i = 1; i < dados.length; i++) {
+    if (!dados[i][0]) continue;
+    itens.push(linhaParaFeedback(dados[i]));
+  }
+  return { ok: true, itens: itens };
+}
+
+function listarFeedbackPorEmail(sh, email) {
+  const alvo = String(email || "").trim().toLowerCase();
+  const dados = sh.getDataRange().getValues();
+  const itens = [];
+  for (let i = 1; i < dados.length; i++) {
+    if (!dados[i][0]) continue;
+    if (String(dados[i][3]).trim().toLowerCase() !== alvo) continue;
+    itens.push(linhaParaFeedback(dados[i]));
+  }
+  return { ok: true, itens: itens };
+}
+
+function responderFeedback(sh, dados) {
+  const linha = encontrarLinhaPorId(sh, dados.id);
+  if (linha === -1) return { ok: false, erro: "Feedback não encontrado." };
+  sh.getRange(linha, COL_FEEDBACK_STATUS).setValue("Respondido");
+  sh.getRange(linha, COL_FEEDBACK_RESPOSTA).setValue(dados.resposta || "");
+  sh.getRange(linha, COL_FEEDBACK_DATA_RESPOSTA).setValue(new Date());
+  sh.getRange(linha, COL_FEEDBACK_LIDO).setValue(false);
+  return { ok: true };
+}
+
+function marcarFeedbackLido(sh, dados) {
+  const linha = encontrarLinhaPorId(sh, dados.id);
+  if (linha === -1) return { ok: false, erro: "Feedback não encontrado." };
+  sh.getRange(linha, COL_FEEDBACK_LIDO).setValue(true);
+  return { ok: true };
+}
+
+function linhaParaAviso(linha) {
+  return {
+    id: linha[0],
+    dataHora: linha[1] instanceof Date ? linha[1].toISOString() : linha[1],
+    titulo: linha[2],
+    mensagem: linha[3],
+    ativo: linha[4] === true,
+  };
+}
+
+function criarAvisoLinha(sh, dados) {
+  const id = Utilities.getUuid().slice(0, 8);
+  const linha = proximaLinhaVaziaPorId(sh);
+  sh.getRange(linha, 1, 1, CABECALHOS_AVISOS.length).setValues([[
+    id, new Date(), dados.titulo || "", dados.mensagem || "", true,
+  ]]);
+  return { ok: true, id: id };
+}
+
+function listarAvisos(sh, somenteAtivos) {
+  const dados = sh.getDataRange().getValues();
+  const itens = [];
+  for (let i = 1; i < dados.length; i++) {
+    if (!dados[i][0]) continue;
+    const aviso = linhaParaAviso(dados[i]);
+    if (somenteAtivos && !aviso.ativo) continue;
+    itens.push(aviso);
+  }
+  return { ok: true, itens: itens };
+}
+
+function desativarAvisoLinha(sh, dados) {
+  const linha = encontrarLinhaPorId(sh, dados.id);
+  if (linha === -1) return { ok: false, erro: "Aviso não encontrado." };
+  sh.getRange(linha, COL_AVISO_ATIVO).setValue(false);
+  return { ok: true };
+}
+
 function doPost(e) {
   try {
     // log do payload bruto recebido -- pra ver EXATAMENTE o que a InfinitePay
@@ -2134,6 +2336,37 @@ function doPost(e) {
 
     const dados = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Feedback/Avisos da Plataforma do Aluno -- aba própria (ABA_FEEDBACK/
+    // ABA_AVISOS), roteado ANTES do resto (que é tudo sobre Leads/pagamento)
+    // por causa do campo "tipo" que o front-end manda (ver
+    // site/js/feedback-store.js). Nenhum desses ramos toca a aba Leads.
+    if (dados.tipo && String(dados.tipo).indexOf("feedback-") === 0) {
+      const shFeedback = ss.getSheetByName(ABA_FEEDBACK);
+      let resultadoFeedback;
+      if (dados.tipo === "feedback-enviar") resultadoFeedback = registrarFeedback(shFeedback, dados);
+      else if (dados.tipo === "feedback-listar-admin") resultadoFeedback = listarFeedbackTudo(shFeedback);
+      else if (dados.tipo === "feedback-meus") resultadoFeedback = listarFeedbackPorEmail(shFeedback, dados.email);
+      else if (dados.tipo === "feedback-responder") resultadoFeedback = responderFeedback(shFeedback, dados);
+      else if (dados.tipo === "feedback-marcar-lido") resultadoFeedback = marcarFeedbackLido(shFeedback, dados);
+      else resultadoFeedback = { ok: false, erro: "tipo de feedback desconhecido" };
+      return ContentService
+        .createTextOutput(JSON.stringify(resultadoFeedback))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (dados.tipo && String(dados.tipo).indexOf("aviso-") === 0) {
+      const shAvisos = ss.getSheetByName(ABA_AVISOS);
+      let resultadoAviso;
+      if (dados.tipo === "aviso-criar") resultadoAviso = criarAvisoLinha(shAvisos, dados);
+      else if (dados.tipo === "aviso-listar") resultadoAviso = listarAvisos(shAvisos, !dados.incluirInativos);
+      else if (dados.tipo === "aviso-desativar") resultadoAviso = desativarAvisoLinha(shAvisos, dados);
+      else resultadoAviso = { ok: false, erro: "tipo de aviso desconhecido" };
+      return ContentService
+        .createTextOutput(JSON.stringify(resultadoAviso))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const sh = ss.getSheetByName(ABA_LEADS);
 
     // heurística: payload da InfinitePay (webhook de pagamento) tem "amount"

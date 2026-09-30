@@ -118,10 +118,10 @@
 
   function obterProgressoEstacao(alunoId, estacaoId, totalVideos) {
     var aluno = buscarPorId(alunoId);
-    if (!aluno) return { videos: new Array(totalVideos).fill(false), quiz: { tentativas: 0, melhorAcertos: 0, ultimoAcertos: 0, totalPerguntas: 0 } };
+    if (!aluno) return { videos: new Array(totalVideos).fill(false), quiz: { tentativas: 0, melhorAcertos: 0, ultimoAcertos: 0, totalPerguntas: 0 }, concluida: false };
     if (!aluno.progresso) aluno.progresso = {};
     if (!aluno.progresso[estacaoId]) {
-      return { videos: new Array(totalVideos).fill(false), quiz: { tentativas: 0, melhorAcertos: 0, ultimoAcertos: 0, totalPerguntas: 0 } };
+      return { videos: new Array(totalVideos).fill(false), quiz: { tentativas: 0, melhorAcertos: 0, ultimoAcertos: 0, totalPerguntas: 0 }, concluida: false };
     }
     return aluno.progresso[estacaoId];
   }
@@ -158,6 +158,23 @@
     salvarLista(lista);
   }
 
+  // Marca um item sem quiz (Esqueletos, Aulas com Especialistas, ou
+  // qualquer item tipo "video") como concluído -- usado pelo botão
+  // "Concluir etapa" da plataforma, no lugar do quiz.
+  function marcarConcluida(alunoId, itemId) {
+    var lista = listar();
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i].id !== alunoId) continue;
+      if (!lista[i].progresso) lista[i].progresso = {};
+      if (!lista[i].progresso[itemId]) {
+        lista[i].progresso[itemId] = { videos: [], quiz: { tentativas: 0, melhorAcertos: 0, ultimoAcertos: 0, totalPerguntas: 0 }, concluida: false };
+      }
+      lista[i].progresso[itemId].concluida = true;
+      break;
+    }
+    salvarLista(lista);
+  }
+
   window.AlunosStore = {
     listar: listar,
     buscarPorEmail: buscarPorEmail,
@@ -168,6 +185,7 @@
     remover: remover,
     obterProgressoEstacao: obterProgressoEstacao,
     marcarVideoAssistido: marcarVideoAssistido,
-    salvarResultadoQuiz: salvarResultadoQuiz
+    salvarResultadoQuiz: salvarResultadoQuiz,
+    marcarConcluida: marcarConcluida
   };
 })();
