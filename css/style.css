@@ -724,6 +724,19 @@ section {
   display: block;
 }
 
+/* Dr. Sérgio e Dra. Pricila têm bem mais fundo vazio acima da cabeça nas
+   fotos originais do que o resto da equipe -- aproxima (zoom a partir da
+   base) pra ficarem proporcionais aos demais cards. */
+.team-card-photo img[src*="team-sergio"] {
+  transform: scale(1.35);
+  transform-origin: bottom center;
+}
+
+.team-card-photo img[src*="team-pricila"] {
+  transform: scale(1.4);
+  transform-origin: bottom center;
+}
+
 .team-card-body {
   padding: 20px 22px 26px;
 }
