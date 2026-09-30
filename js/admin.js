@@ -11,6 +11,13 @@
   var CHAVE_SESSAO = "crmnamao_sessao";
   var ADMIN_EMAILS = window.ADMIN_EMAILS || [];
 
+  // Preencher depois do `wrangler deploy` do Worker em /worker (ver
+  // worker/wrangler.toml e worker/src/index.js). WORKER_URL é a URL que o
+  // wrangler imprime no deploy; WORKER_ADMIN_TOKEN é o mesmo valor
+  // configurado com `wrangler secret put ADMIN_TOKEN`.
+  var WORKER_URL = "https://crmnamao-video-import.empty-frost-231e.workers.dev";
+  var WORKER_ADMIN_TOKEN = "db0cd22bf0e8236da054eb04fc4ba272e29150430e41012c90b0d47ad0e9fc9c";
+
   // Mantenha esta lista igual ao array PRODUTOS do
   // google-apps-script-planilha-setup.gs.
   var PLANOS = ["Expresso", "Expresso + Pense", "Premium", "Premium + Pense", "Outro"];
@@ -79,6 +86,7 @@
   // ---------- Estado ----------
 
   var estado = { view: "alunos", filtroStatus: "todos", busca: "" };
+  var filaVideos = [];
   var cacheFeedback = [];
   var cacheAvisos = [];
 
@@ -110,7 +118,8 @@
     var abasView = [
       { chave: "alunos", rotulo: "Alunos" },
       { chave: "feedbacks", rotulo: "Feedbacks" },
-      { chave: "avisos", rotulo: "Avisos" }
+      { chave: "avisos", rotulo: "Avisos" },
+      { chave: "videos", rotulo: "Vídeos" }
     ];
     elMain.innerHTML =
       '<div class="admin-view-switch">' +
@@ -129,6 +138,7 @@
 
     if (estado.view === "feedbacks") renderFeedbacksView();
     else if (estado.view === "avisos") renderAvisosView();
+    else if (estado.view === "videos") renderVideosView();
     else renderAlunosView();
   }
 
@@ -401,6 +411,118 @@
           window.FeedbackAPI.desativarAviso(btn.getAttribute("data-id")).then(function () { renderAvisosView(); });
         });
       });
+    });
+  }
+
+  // ---------- View: Vídeos (importar do Google Drive pro R2) ----------
+
+  function extrairDriveId(linha) {
+    var texto = linha.trim();
+    if (!texto) return null;
+    var porCaminho = texto.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+    if (porCaminho) return porCaminho[1];
+    var porQuery = texto.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+    if (porQuery) return porQuery[1];
+    if (/^[a-zA-Z0-9_-]{10,}$/.test(texto)) return texto;
+    return null;
+  }
+
+  function renderFilaVideos() {
+    var elLista = document.getElementById("videoFilaLista");
+    if (!elLista) return;
+
+    if (!filaVideos.length) {
+      elLista.innerHTML = "";
+      return;
+    }
+
+    var ROTULO_STATUS = { pendente: "Pendente", enviando: "Enviando...", concluido: "Concluído", erro: "Erro" };
+
+    elLista.innerHTML =
+      '<div class="admin-tabela-wrap" style="margin-top:20px;"><table class="admin-tabela">' +
+        "<thead><tr><th>Arquivo</th><th>Status</th><th>URL pública</th></tr></thead>" +
+        "<tbody>" +
+        filaVideos.map(function (item) {
+          return (
+            "<tr>" +
+              "<td>" + escapeHtml(item.nomeArquivo || item.driveId) + "</td>" +
+              '<td><span class="admin-status admin-status-' + (item.status === "concluido" ? "ativo" : item.status === "erro" ? "removido" : "pendente") + '">' +
+                ROTULO_STATUS[item.status] + "</span></td>" +
+              "<td>" +
+                (item.status === "concluido"
+                  ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener">' + escapeHtml(item.url) + "</a>"
+                  : item.status === "erro"
+                    ? escapeHtml(item.erro || "")
+                    : "—") +
+              "</td>" +
+            "</tr>"
+          );
+        }).join("") +
+        "</tbody></table></div>";
+  }
+
+  async function importarUmVideo(item) {
+    item.status = "enviando";
+    renderFilaVideos();
+
+    try {
+      var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+        body: JSON.stringify({ driveId: item.driveId }),
+      });
+      var dados = await resp.json();
+      if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+      item.status = "concluido";
+      item.nomeArquivo = dados.nomeArquivo;
+      item.url = dados.url;
+    } catch (erro) {
+      item.status = "erro";
+      item.erro = String(erro && erro.message ? erro.message : erro);
+    }
+    renderFilaVideos();
+  }
+
+  async function importarFilaVideos() {
+    for (var i = 0; i < filaVideos.length; i++) {
+      if (filaVideos[i].status === "pendente") {
+        await importarUmVideo(filaVideos[i]);
+      }
+    }
+  }
+
+  function renderVideosView() {
+    var elViewBody = document.getElementById("adminViewBody");
+
+    elViewBody.innerHTML =
+      '<div class="admin-cabecalho"><h1>Importar vídeos do Google Drive</h1></div>' +
+      '<p class="admin-modal-ajuda">' +
+        "Cole abaixo um link ou ID do Google Drive por linha (marque os arquivos como \"Qualquer pessoa com o link\" antes de importar, e pode voltar a deixar privado depois). " +
+        "Cada vídeo é copiado direto do Drive pro R2, sem passar pelo seu computador." +
+      "</p>" +
+      '<div class="admin-modal-campo">' +
+        '<label>Links ou IDs do Drive (um por linha)</label>' +
+        '<textarea id="videoLinksInput" rows="6" placeholder="https://drive.google.com/file/d/XXXXXXXXXXXX/view\nhttps://drive.google.com/file/d/YYYYYYYYYYYY/view"></textarea>' +
+      "</div>" +
+      '<button type="button" class="btn btn-plan" id="btnImportarVideos">Importar vídeos</button>' +
+      '<div id="videoFilaLista"></div>';
+
+    renderFilaVideos();
+
+    document.getElementById("btnImportarVideos").addEventListener("click", function () {
+      var linhas = document.getElementById("videoLinksInput").value.split("\n");
+      var novos = [];
+      linhas.forEach(function (linha) {
+        var driveId = extrairDriveId(linha);
+        if (driveId) novos.push({ driveId: driveId, status: "pendente", nomeArquivo: null, url: null, erro: null });
+      });
+      if (!novos.length) {
+        window.alert("Nenhum link ou ID válido encontrado. Confira o que foi colado.");
+        return;
+      }
+      filaVideos = filaVideos.concat(novos);
+      document.getElementById("videoLinksInput").value = "";
+      importarFilaVideos();
     });
   }
 
