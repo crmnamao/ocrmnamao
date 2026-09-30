@@ -71,6 +71,22 @@
       color: var(--muted-2);
       line-height: 1.6;
     }
+    .login-pendente-icone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      border: 1px solid var(--card-border);
+    }
+    .login-pendente-icone svg {
+      width: 19px;
+      height: 19px;
+      stroke: var(--accent);
+    }
     .login-suporte-whatsapp {
       display: inline-flex;
       align-items: center;
@@ -122,10 +138,17 @@
 
       <p id="loginStatus" class="login-status" role="status"></p>
 
-      <p class="login-pendente">
-        🔒 O acesso à plataforma é exclusivo para quem já adquiriu um dos nossos planos.
-        Se você comprou e está com alguma dúvida para entrar, fale com o nosso suporte.
-      </p>
+      <div class="login-pendente">
+        <span class="login-pendente-icone">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+        </span>
+        <p>
+          O acesso à plataforma é exclusivo para quem já adquiriu um dos nossos planos.
+          Se você comprou e está com alguma dúvida para entrar, fale com o nosso suporte.
+        </p>
+      </div>
       <a
         class="login-suporte-whatsapp"
         href="https://wa.me/5516997296208?text=Ol%C3%A1!%20Estou%20com%20d%C3%BAvida%20para%20acessar%20a%20plataforma%20da%20CRM%20na%20M%C3%A3o."
