@@ -2317,6 +2317,10 @@ body.plat-modal-aberto {
   overflow: hidden;
 }
 
+.quiz-overlay[hidden] {
+  display: none;
+}
+
 .quiz-overlay {
   position: fixed;
   inset: 0;
