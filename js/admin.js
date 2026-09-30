@@ -413,7 +413,16 @@
     });
   }
 
-  // ---------- View: Vídeos (importar do Google Drive pro R2) ----------
+  // ---------- View: Vídeos (importar do Google Drive pro R2 + biblioteca) ----------
+
+  var TAMANHO_PAGINA_BIBLIOTECA = 25;
+  var biblioteca = [];
+  var paginaBiblioteca = 1;
+  var filtroAnoBiblioteca = "todos";
+  var slotsEmEdicao = {}; // "itemId|tipo" -> true enquanto o admin está trocando o vídeo daquele slot
+  var rascunhosClassificacao = {}; // id do vídeo -> {grupoId, itemId, tipo} (edição não salva ainda)
+
+  var ROTULO_TIPO_VIDEO = { original: "Original (prova)", comentado: "Comentado (professor)" };
 
   function extrairDriveId(linha) {
     var texto = linha.trim();
@@ -436,38 +445,10 @@
     return grupo.itens.filter(function (i) { return i.tipo === "video"; });
   }
 
-  var ROTULO_TIPO_VIDEO = { original: "Original (prova)", comentado: "Comentado (professor)" };
-
-  function renderClassificacao(item, idx) {
-    if (item.status !== "concluido") return "";
-
-    var c = item.classificacao;
-    var opcoesAno = '<option value="">Selecione o ano</option>' +
-      gruposEdicao().map(function (g) {
-        return '<option value="' + escapeHtml(g.id) + '"' + (c.grupoId === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + "</option>";
-      }).join("");
-
-    var estacoes = c.grupoId ? estacoesDoGrupo(c.grupoId) : [];
-    var opcoesEstacao = '<option value="">' + (c.grupoId ? "Selecione a estação" : "Escolha o ano primeiro") + '</option>' +
-      estacoes.map(function (i) {
-        return '<option value="' + escapeHtml(i.id) + '"' + (c.itemId === i.id ? " selected" : "") + '>' + escapeHtml(i.titulo) + "</option>";
-      }).join("");
-
-    var html =
-      '<div class="admin-video-classificar" data-idx="' + idx + '">' +
-        '<select class="videoSelectAno" data-idx="' + idx + '">' + opcoesAno + "</select>" +
-        '<select class="videoSelectEstacao" data-idx="' + idx + '"' + (!c.grupoId ? " disabled" : "") + '>' + opcoesEstacao + "</select>" +
-        '<select class="videoSelectTipo" data-idx="' + idx + '">' +
-          '<option value="original"' + (c.tipo === "original" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.original + "</option>" +
-          '<option value="comentado"' + (c.tipo === "comentado" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.comentado + "</option>" +
-        "</select>" +
-        '<button type="button" class="admin-link videoBtnVincular" data-idx="' + idx + '">Vincular</button>' +
-      "</div>";
-
-    if (item.vinculado) {
-      html += '<p class="admin-video-vinculado-ok">✓ Vinculado: ' + escapeHtml(item.vinculado) + "</p>";
-    }
-    return html;
+  function formatarTamanho(bytes) {
+    if (!bytes) return "";
+    var mb = bytes / (1024 * 1024);
+    return mb >= 1024 ? (mb / 1024).toFixed(1) + " GB" : Math.round(mb) + " MB";
   }
 
   function renderFilaVideos() {
@@ -483,9 +464,9 @@
 
     elLista.innerHTML =
       '<div class="admin-tabela-wrap" style="margin-top:20px;"><table class="admin-tabela">' +
-        "<thead><tr><th>Arquivo</th><th>Status</th><th>URL pública</th><th>Classificar</th></tr></thead>" +
+        "<thead><tr><th>Arquivo</th><th>Status</th><th>URL pública</th></tr></thead>" +
         "<tbody>" +
-        filaVideos.map(function (item, idx) {
+        filaVideos.map(function (item) {
           return (
             "<tr>" +
               "<td>" + escapeHtml(item.nomeArquivo || item.driveId) + "</td>" +
@@ -498,7 +479,6 @@
                     ? escapeHtml(item.erro || "")
                     : "—") +
               "</td>" +
-              "<td>" + renderClassificacao(item, idx) + "</td>" +
             "</tr>"
           );
         }).join("") +
@@ -533,6 +513,350 @@
         await importarUmVideo(filaVideos[i]);
       }
     }
+    carregarBiblioteca();
+  }
+
+  // ---------- Biblioteca de vídeos (persistente, paginada) ----------
+
+  async function carregarBiblioteca() {
+    var elLista = document.getElementById("bibliotecaLista");
+    if (elLista) elLista.innerHTML = '<p class="admin-vazio">Carregando biblioteca...</p>';
+
+    try {
+      var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/biblioteca", {
+        headers: { "X-Admin-Token": WORKER_ADMIN_TOKEN },
+      });
+      var dados = await resp.json();
+      biblioteca = (dados && dados.ok) ? dados.itens : [];
+    } catch (erro) {
+      biblioteca = [];
+    }
+    paginaBiblioteca = 1;
+    renderBiblioteca();
+  }
+
+  function draftDe(item) {
+    if (!rascunhosClassificacao[item.id]) {
+      rascunhosClassificacao[item.id] = { grupoId: item.grupoId || "", itemId: item.itemId || "", tipo: item.tipo || "original" };
+    }
+    return rascunhosClassificacao[item.id];
+  }
+
+  function renderLinhaBiblioteca(item) {
+    var d = draftDe(item);
+    var opcoesAno = '<option value="">Ano</option>' +
+      gruposEdicao().map(function (g) {
+        return '<option value="' + escapeHtml(g.id) + '"' + (d.grupoId === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + "</option>";
+      }).join("");
+
+    var estacoes = d.grupoId ? estacoesDoGrupo(d.grupoId) : [];
+    var opcoesEstacao = '<option value="">' + (d.grupoId ? "Estação" : "Escolha o ano") + '</option>' +
+      estacoes.map(function (i) {
+        return '<option value="' + escapeHtml(i.id) + '"' + (d.itemId === i.id ? " selected" : "") + '>' + escapeHtml(i.titulo) + "</option>";
+      }).join("");
+
+    var grupoAtual = item.grupoId ? gruposEdicao().filter(function (g) { return g.id === item.grupoId; })[0] : null;
+    var estacaoAtual = (item.grupoId && item.itemId) ? estacoesDoGrupo(item.grupoId).filter(function (i) { return i.id === item.itemId; })[0] : null;
+    var vinculoAtual = (grupoAtual && estacaoAtual)
+      ? grupoAtual.titulo + " — " + estacaoAtual.titulo + " — " + ROTULO_TIPO_VIDEO[item.tipo]
+      : "Não vinculado";
+
+    return (
+      "<tr>" +
+        "<td>" +
+          '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener">' + escapeHtml(item.nomeArquivo) + "</a>" +
+          '<div class="admin-video-meta">' + formatarTamanho(item.tamanho) + (item.criadoEm ? " · " + new Date(item.criadoEm).toLocaleDateString("pt-BR") : "") + "</div>" +
+          '<div class="admin-video-url-editar">' +
+            '<input type="text" class="videoInputUrl" data-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.url) + '" />' +
+            '<button type="button" class="admin-link videoBtnSalvarUrl" data-id="' + escapeHtml(item.id) + '">Salvar link</button>' +
+          "</div>" +
+        "</td>" +
+        "<td>" +
+          '<p class="admin-video-vinculo-atual' + (grupoAtual ? " is-vinculado" : "") + '">' + escapeHtml(vinculoAtual) + "</p>" +
+        "</td>" +
+        "<td>" +
+          '<div class="admin-video-classificar" data-id="' + escapeHtml(item.id) + '">' +
+            '<select class="videoSelectAno" data-id="' + escapeHtml(item.id) + '">' + opcoesAno + "</select>" +
+            '<select class="videoSelectEstacao" data-id="' + escapeHtml(item.id) + '"' + (!d.grupoId ? " disabled" : "") + '>' + opcoesEstacao + "</select>" +
+            '<select class="videoSelectTipo" data-id="' + escapeHtml(item.id) + '">' +
+              '<option value="original"' + (d.tipo === "original" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.original + "</option>" +
+              '<option value="comentado"' + (d.tipo === "comentado" ? " selected" : "") + '>' + ROTULO_TIPO_VIDEO.comentado + "</option>" +
+            "</select>" +
+            '<button type="button" class="admin-link videoBtnSalvar" data-id="' + escapeHtml(item.id) + '">Salvar</button>' +
+            (grupoAtual ? '<button type="button" class="admin-link admin-link-remover videoBtnDesvincular" data-id="' + escapeHtml(item.id) + '">Desvincular</button>' : "") +
+          "</div>" +
+        "</td>" +
+      "</tr>"
+    );
+  }
+
+  function bibliotecaFiltrada() {
+    if (filtroAnoBiblioteca === "todos") return biblioteca;
+    if (filtroAnoBiblioteca === "nao-vinculados") return biblioteca.filter(function (v) { return !v.itemId; });
+    return biblioteca.filter(function (v) { return v.grupoId === filtroAnoBiblioteca; });
+  }
+
+  function renderSlotVideo(grupoId, estacao, tipo) {
+    var vinculado = buscarRegistroVinculado(estacao.id, tipo);
+    var chaveSlot = estacao.id + "|" + tipo;
+    var trocando = slotsEmEdicao[chaveSlot];
+    var rotuloTipo = ROTULO_TIPO_VIDEO[tipo];
+
+    if (vinculado && !trocando) {
+      return (
+        '<div class="admin-slot-video">' +
+          '<p class="admin-slot-titulo">' + escapeHtml(estacao.titulo) + " — " + rotuloTipo + "</p>" +
+          '<a class="admin-slot-atual" href="' + escapeHtml(vinculado.url) + '" target="_blank" rel="noopener">' + escapeHtml(vinculado.nomeArquivo) + "</a>" +
+          '<button type="button" class="admin-link slotBtnTrocar" data-slot="' + escapeHtml(chaveSlot) + '">Substituir</button>' +
+        "</div>"
+      );
+    }
+
+    var opcoesExistentes = '<option value="">Selecionar vídeo já importado...</option>' +
+      naoVinculados().map(function (v) { return '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.nomeArquivo) + "</option>"; }).join("");
+
+    return (
+      '<div class="admin-slot-video">' +
+        '<p class="admin-slot-titulo">' + escapeHtml(estacao.titulo) + " — " + rotuloTipo + "</p>" +
+        (vinculado ? '<p class="admin-slot-substituindo">Substituindo: ' + escapeHtml(vinculado.nomeArquivo) + "</p>" : "") +
+        '<select class="slotSelectExistente" data-grupo="' + escapeHtml(grupoId) + '" data-item="' + escapeHtml(estacao.id) + '" data-tipo="' + tipo + '">' + opcoesExistentes + "</select>" +
+        '<div class="admin-slot-novo">' +
+          '<input type="text" class="slotInputNovo" placeholder="Ou cole um link/ID novo do Drive" data-grupo="' + escapeHtml(grupoId) + '" data-item="' + escapeHtml(estacao.id) + '" data-tipo="' + tipo + '" />' +
+          '<button type="button" class="admin-link slotBtnImportarNovo" data-grupo="' + escapeHtml(grupoId) + '" data-item="' + escapeHtml(estacao.id) + '" data-tipo="' + tipo + '">Importar</button>' +
+        "</div>" +
+        (vinculado ? '<button type="button" class="admin-link admin-link-remover slotBtnCancelarTroca" data-slot="' + escapeHtml(chaveSlot) + '">Cancelar</button>' : "") +
+      "</div>"
+    );
+  }
+
+  function renderGradeImportacao() {
+    var elGrade = document.getElementById("bibliotecaGrade");
+    if (!elGrade) return;
+
+    var grupoId = filtroAnoBiblioteca;
+    var grupo = gruposEdicao().filter(function (g) { return g.id === grupoId; })[0];
+    if (!grupo) { elGrade.innerHTML = ""; return; }
+
+    var estacoes = estacoesDoGrupo(grupoId);
+
+    elGrade.innerHTML =
+      '<div class="admin-cabecalho" style="margin-top:0;"><h2>Importar direto nas estações de ' + escapeHtml(grupo.titulo) + "</h2></div>" +
+      '<div class="admin-grade-importacao">' +
+        estacoes.map(function (estacao) {
+          return (
+            '<div class="admin-grade-estacao">' +
+              renderSlotVideo(grupoId, estacao, "original") +
+              renderSlotVideo(grupoId, estacao, "comentado") +
+            "</div>"
+          );
+        }).join("") +
+      "</div>";
+  }
+
+  function renderFiltroBiblioteca() {
+    var elFiltro = document.getElementById("bibliotecaFiltroAno");
+    if (!elFiltro) return;
+    elFiltro.innerHTML =
+      '<option value="todos"' + (filtroAnoBiblioteca === "todos" ? " selected" : "") + '>Todos os vídeos (' + biblioteca.length + ")</option>" +
+      '<option value="nao-vinculados"' + (filtroAnoBiblioteca === "nao-vinculados" ? " selected" : "") + '>Não vinculados (' + biblioteca.filter(function (v) { return !v.itemId; }).length + ")</option>" +
+      gruposEdicao().map(function (g) {
+        var qtd = biblioteca.filter(function (v) { return v.grupoId === g.id; }).length;
+        return '<option value="' + escapeHtml(g.id) + '"' + (filtroAnoBiblioteca === g.id ? " selected" : "") + '>' + escapeHtml(g.titulo) + " (" + qtd + ")</option>";
+      }).join("");
+  }
+
+  function renderBiblioteca() {
+    var elLista = document.getElementById("bibliotecaLista");
+    var elPaginacao = document.getElementById("bibliotecaPaginacao");
+    if (!elLista) return;
+
+    renderFiltroBiblioteca();
+    renderGradeImportacao();
+
+    var lista = bibliotecaFiltrada();
+
+    if (!lista.length) {
+      elLista.innerHTML = '<p class="admin-vazio">' + (biblioteca.length ? "Nenhum vídeo nesse filtro." : "Nenhum vídeo importado ainda.") + "</p>";
+      if (elPaginacao) elPaginacao.innerHTML = "";
+      return;
+    }
+
+    var totalPaginas = Math.max(1, Math.ceil(lista.length / TAMANHO_PAGINA_BIBLIOTECA));
+    if (paginaBiblioteca > totalPaginas) paginaBiblioteca = totalPaginas;
+    var inicio = (paginaBiblioteca - 1) * TAMANHO_PAGINA_BIBLIOTECA;
+    var pagina = lista.slice(inicio, inicio + TAMANHO_PAGINA_BIBLIOTECA);
+
+    elLista.innerHTML =
+      '<div class="admin-tabela-wrap"><table class="admin-tabela">' +
+        "<thead><tr><th>Arquivo</th><th>Vínculo atual</th><th>Classificar</th></tr></thead>" +
+        "<tbody>" + pagina.map(renderLinhaBiblioteca).join("") + "</tbody>" +
+      "</table></div>";
+
+    if (elPaginacao) {
+      elPaginacao.innerHTML =
+        '<button type="button" class="btn btn-plan-outline" id="bibliotecaAnterior"' + (paginaBiblioteca <= 1 ? " disabled" : "") + '>Anterior</button>' +
+        '<span class="admin-paginacao-info">Página ' + paginaBiblioteca + " de " + totalPaginas + " (" + lista.length + " vídeos)</span>" +
+        '<button type="button" class="btn btn-plan-outline" id="bibliotecaProxima"' + (paginaBiblioteca >= totalPaginas ? " disabled" : "") + '>Próxima</button>';
+
+      var elAnterior = document.getElementById("bibliotecaAnterior");
+      var elProxima = document.getElementById("bibliotecaProxima");
+      if (elAnterior) elAnterior.addEventListener("click", function () { paginaBiblioteca--; renderBiblioteca(); });
+      if (elProxima) elProxima.addEventListener("click", function () { paginaBiblioteca++; renderBiblioteca(); });
+    }
+  }
+
+  // ---------- Chamadas "cruas" ao Worker (sem confirm/alert), reaproveitadas
+  // pelos botões manuais da tabela e pela grade de importação por estação ----------
+
+  async function classificarRaw(id, grupoId, itemId, tipo) {
+    var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/biblioteca/classificar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+      body: JSON.stringify({ id: id, grupoId: grupoId, itemId: itemId, tipo: tipo }),
+    });
+    var dados = await resp.json();
+    if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+    var registro = biblioteca.filter(function (v) { return v.id === id; })[0];
+    if (registro) { registro.grupoId = dados.item.grupoId; registro.itemId = dados.item.itemId; registro.tipo = dados.item.tipo; }
+    return dados.item;
+  }
+
+  async function desvincularRaw(id) {
+    var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/biblioteca/desvincular", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+      body: JSON.stringify({ id: id }),
+    });
+    var dados = await resp.json();
+    if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+    var registro = biblioteca.filter(function (v) { return v.id === id; })[0];
+    if (registro) { registro.grupoId = null; registro.itemId = null; registro.tipo = null; }
+  }
+
+  async function importarRaw(driveId) {
+    var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+      body: JSON.stringify({ driveId: driveId }),
+    });
+    var dados = await resp.json();
+    if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+    var registro = {
+      id: dados.id, chave: dados.chave, nomeArquivo: dados.nomeArquivo, url: dados.url,
+      tamanho: dados.tamanhoOriginal, criadoEm: new Date().toISOString(), grupoId: null, itemId: null, tipo: null,
+    };
+    biblioteca.unshift(registro);
+    return registro;
+  }
+
+  async function salvarClassificacaoBiblioteca(id, botao) {
+    var draft = rascunhosClassificacao[id];
+    if (!draft || !draft.grupoId || !draft.itemId) {
+      window.alert("Escolha o ano e a estação antes de salvar.");
+      return;
+    }
+
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+
+    try {
+      await classificarRaw(id, draft.grupoId, draft.itemId, draft.tipo);
+      delete rascunhosClassificacao[id];
+    } catch (erro) {
+      window.alert("Não deu pra salvar agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderBiblioteca();
+  }
+
+  async function desvincularBiblioteca(id) {
+    if (!window.confirm("Desvincular este vídeo da estação atual? Ele continua na biblioteca, só some da plataforma do aluno.")) return;
+
+    try {
+      await desvincularRaw(id);
+      delete rascunhosClassificacao[id];
+    } catch (erro) {
+      window.alert("Não deu pra desvincular agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderBiblioteca();
+  }
+
+  function buscarRegistroVinculado(itemId, tipo) {
+    return biblioteca.filter(function (v) { return v.itemId === itemId && v.tipo === tipo; })[0] || null;
+  }
+
+  function naoVinculados() {
+    return biblioteca.filter(function (v) { return !v.itemId; });
+  }
+
+  async function vincularExistenteSlot(select) {
+    var idExistente = select.value;
+    if (!idExistente) return;
+    var grupoId = select.getAttribute("data-grupo");
+    var itemId = select.getAttribute("data-item");
+    var tipo = select.getAttribute("data-tipo");
+    var chaveSlot = itemId + "|" + tipo;
+    var antigo = buscarRegistroVinculado(itemId, tipo);
+
+    try {
+      if (antigo && antigo.id !== idExistente) await desvincularRaw(antigo.id);
+      await classificarRaw(idExistente, grupoId, itemId, tipo);
+      delete slotsEmEdicao[chaveSlot];
+    } catch (erro) {
+      window.alert("Não deu pra vincular agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderBiblioteca();
+  }
+
+  async function importarEVincularSlot(input, botao) {
+    var driveId = extrairDriveId(input.value);
+    if (!driveId) {
+      window.alert("Link ou ID do Drive inválido.");
+      return;
+    }
+    var grupoId = botao.getAttribute("data-grupo");
+    var itemId = botao.getAttribute("data-item");
+    var tipo = botao.getAttribute("data-tipo");
+    var chaveSlot = itemId + "|" + tipo;
+    var antigo = buscarRegistroVinculado(itemId, tipo);
+
+    botao.disabled = true;
+    botao.textContent = "Importando...";
+
+    try {
+      var novo = await importarRaw(driveId);
+      if (antigo) await desvincularRaw(antigo.id);
+      await classificarRaw(novo.id, grupoId, itemId, tipo);
+      delete slotsEmEdicao[chaveSlot];
+    } catch (erro) {
+      window.alert("Não deu pra importar/vincular agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderBiblioteca();
+  }
+
+  async function salvarUrlBiblioteca(id, novaUrl, botao) {
+    novaUrl = novaUrl.trim();
+    if (!novaUrl) {
+      window.alert("O link não pode ficar vazio.");
+      return;
+    }
+
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+
+    try {
+      var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/biblioteca/editar-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
+        body: JSON.stringify({ id: id, url: novaUrl }),
+      });
+      var dados = await resp.json();
+      if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
+      var registro = biblioteca.filter(function (v) { return v.id === id; })[0];
+      if (registro) registro.url = dados.item.url;
+    } catch (erro) {
+      window.alert("Não deu pra salvar o link agora: " + (erro && erro.message ? erro.message : erro));
+    }
+    renderBiblioteca();
   }
 
   function renderVideosView() {
@@ -549,21 +873,31 @@
         '<textarea id="videoLinksInput" rows="6" placeholder="https://drive.google.com/file/d/XXXXXXXXXXXX/view\nhttps://drive.google.com/file/d/YYYYYYYYYYYY/view"></textarea>' +
       "</div>" +
       '<button type="button" class="btn btn-plan" id="btnImportarVideos">Importar vídeos</button>' +
-      '<div id="videoFilaLista"></div>';
+      '<div id="videoFilaLista"></div>' +
+      '<div class="admin-cabecalho" style="margin-top:36px;"><h1>Biblioteca de vídeos</h1></div>' +
+      '<div class="admin-modal-campo admin-biblioteca-filtro">' +
+        '<label>Filtrar por ano</label>' +
+        '<select id="bibliotecaFiltroAno"></select>' +
+      "</div>" +
+      '<div id="bibliotecaGrade"></div>' +
+      '<div id="bibliotecaLista"></div>' +
+      '<div class="admin-paginacao" id="bibliotecaPaginacao"></div>';
 
     renderFilaVideos();
+    carregarBiblioteca();
+
+    document.getElementById("bibliotecaFiltroAno").addEventListener("change", function (ev) {
+      filtroAnoBiblioteca = ev.target.value;
+      paginaBiblioteca = 1;
+      renderBiblioteca();
+    });
 
     document.getElementById("btnImportarVideos").addEventListener("click", function () {
       var linhas = document.getElementById("videoLinksInput").value.split("\n");
       var novos = [];
       linhas.forEach(function (linha) {
         var driveId = extrairDriveId(linha);
-        if (driveId) {
-          novos.push({
-            driveId: driveId, status: "pendente", nomeArquivo: null, url: null, erro: null,
-            classificacao: { grupoId: "", itemId: "", tipo: "original" }, vinculado: null
-          });
-        }
+        if (driveId) novos.push({ driveId: driveId, status: "pendente", nomeArquivo: null, url: null, erro: null });
       });
       if (!novos.length) {
         window.alert("Nenhum link ou ID válido encontrado. Confira o que foi colado.");
@@ -574,61 +908,54 @@
       importarFilaVideos();
     });
 
-    var elFilaLista = document.getElementById("videoFilaLista");
+    var elBibliotecaGrade = document.getElementById("bibliotecaGrade");
 
-    elFilaLista.addEventListener("change", function (ev) {
-      var idx = ev.target.getAttribute("data-idx");
-      if (idx === null) return;
-      var item = filaVideos[idx];
-      if (!item) return;
-
-      if (ev.target.classList.contains("videoSelectAno")) {
-        item.classificacao.grupoId = ev.target.value;
-        item.classificacao.itemId = "";
-        renderFilaVideos();
-      } else if (ev.target.classList.contains("videoSelectEstacao")) {
-        item.classificacao.itemId = ev.target.value;
-      } else if (ev.target.classList.contains("videoSelectTipo")) {
-        item.classificacao.tipo = ev.target.value;
+    elBibliotecaGrade.addEventListener("change", function (ev) {
+      if (ev.target.classList.contains("slotSelectExistente")) {
+        vincularExistenteSlot(ev.target);
       }
     });
 
-    elFilaLista.addEventListener("click", function (ev) {
-      if (!ev.target.classList.contains("videoBtnVincular")) return;
-      var idx = ev.target.getAttribute("data-idx");
-      var item = filaVideos[idx];
-      if (!item) return;
-      vincularVideoClassificado(item, ev.target);
+    elBibliotecaGrade.addEventListener("click", function (ev) {
+      if (ev.target.classList.contains("slotBtnTrocar")) {
+        slotsEmEdicao[ev.target.getAttribute("data-slot")] = true;
+        renderBiblioteca();
+      } else if (ev.target.classList.contains("slotBtnCancelarTroca")) {
+        delete slotsEmEdicao[ev.target.getAttribute("data-slot")];
+        renderBiblioteca();
+      } else if (ev.target.classList.contains("slotBtnImportarNovo")) {
+        var input = ev.target.parentElement.querySelector(".slotInputNovo");
+        importarEVincularSlot(input, ev.target);
+      }
     });
-  }
 
-  async function vincularVideoClassificado(item, botao) {
-    var c = item.classificacao;
-    if (!c.grupoId || !c.itemId) {
-      window.alert("Escolha o ano e a estação antes de vincular.");
-      return;
-    }
+    var elBibliotecaLista = document.getElementById("bibliotecaLista");
 
-    var grupo = gruposEdicao().filter(function (g) { return g.id === c.grupoId; })[0];
-    var estacao = estacoesDoGrupo(c.grupoId).filter(function (i) { return i.id === c.itemId; })[0];
-    if (!grupo || !estacao) return;
+    elBibliotecaLista.addEventListener("change", function (ev) {
+      var id = ev.target.getAttribute("data-id");
+      if (id === null) return;
+      var item = biblioteca.filter(function (v) { return v.id === id; })[0];
+      if (!item) return;
+      var draft = draftDe(item);
 
-    botao.disabled = true;
-    botao.textContent = "Vinculando...";
+      if (ev.target.classList.contains("videoSelectAno")) {
+        draft.grupoId = ev.target.value;
+        draft.itemId = "";
+        renderBiblioteca();
+      } else if (ev.target.classList.contains("videoSelectEstacao")) {
+        draft.itemId = ev.target.value;
+      } else if (ev.target.classList.contains("videoSelectTipo")) {
+        draft.tipo = ev.target.value;
+      }
+    });
 
-    try {
-      var resp = await fetch(WORKER_URL.replace(/\/$/, "") + "/catalogo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Admin-Token": WORKER_ADMIN_TOKEN },
-        body: JSON.stringify({ itemId: c.itemId, tipo: c.tipo, url: item.url }),
-      });
-      var dados = await resp.json();
-      if (!resp.ok || !dados.ok) throw new Error(dados.error || "Falha desconhecida (HTTP " + resp.status + ")");
-      item.vinculado = grupo.titulo + " — " + estacao.titulo + " — " + ROTULO_TIPO_VIDEO[c.tipo];
-    } catch (erro) {
-      window.alert("Não deu pra vincular agora: " + (erro && erro.message ? erro.message : erro));
-    }
-    renderFilaVideos();
+    elBibliotecaLista.addEventListener("click", function (ev) {
+      if (ev.target.classList.contains("videoBtnSalvar")) {
+        salvarClassificacaoBiblioteca(ev.target.getAttribute("data-id"), ev.target);
+      } else if (ev.target.classList.contains("videoBtnDesvincular")) {
+        desvincularBiblioteca(ev.target.getAttribute("data-id"));
+      }
+    });
   }
 
   // ---------- Modal: adicionar/editar aluno ----------
