@@ -334,6 +334,7 @@ section {
   border: none;
   padding: 6px;
   cursor: pointer;
+  margin-left: auto;
 }
 
 .menu-toggle span {
