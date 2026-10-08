@@ -2999,22 +2999,22 @@ body.plat-modal-aberto {
   }
 }
 
-/* ---------- Botão flutuante "Rever tutorial" (fixo abaixo do nome do usuário) ---------- */
+/* ---------- Botão flutuante "Rever tutorial" (canto inferior direito) ---------- */
 .tutorial-fab {
   position: fixed;
-  right: 28px;
-  top: 72px;
+  right: 22px;
+  bottom: 22px;
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px 7px 11px;
+  padding: 11px 16px 11px 13px;
   border-radius: 999px;
   border: 1px solid rgba(201, 162, 74, 0.4);
   background: var(--card);
   color: var(--gold-2);
   font-family: "Inter Tight", sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -3023,29 +3023,22 @@ body.plat-modal-aberto {
 
 .tutorial-fab:hover,
 .tutorial-fab:focus-visible {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: rgba(236, 217, 166, 0.85);
   box-shadow: 0 0 14px rgba(201, 162, 74, 0.3), var(--shadow);
 }
 
 .tutorial-fab-icone {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
 }
 
-@media (max-width: 900px) {
-  .tutorial-fab {
-    top: auto;
-    bottom: 18px;
-    right: 18px;
-    padding: 12px;
-  }
+@media (max-width: 560px) {
   .tutorial-fab-texto {
     display: none;
   }
-  .tutorial-fab:hover,
-  .tutorial-fab:focus-visible {
-    transform: translateY(-3px);
+  .tutorial-fab {
+    padding: 13px;
   }
 }
 
