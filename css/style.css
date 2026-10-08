@@ -1149,15 +1149,13 @@ section {
   position: relative;
   border-radius: var(--radius-card);
   overflow: hidden;
-  border: 1px solid rgba(201, 162, 74, 0.4);
   box-shadow: var(--shadow);
   background: var(--bg-3);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .depoimento-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(236, 217, 166, 0.85);
   box-shadow:
     0 0 10px rgba(236, 217, 166, 0.4),
     0 0 30px rgba(201, 162, 74, 0.25),
