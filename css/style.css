@@ -2870,7 +2870,7 @@ body.plat-modal-aberto {
   bottom: 24px;
   transform: translateX(-50%);
   width: calc(100% - 32px);
-  max-width: 500px;
+  max-width: 580px;
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
@@ -2879,14 +2879,14 @@ body.plat-modal-aberto {
 }
 
 /* ---------- Avatar do "médico" guiando o tutorial ---------- */
-/* 6 poses estáticas (recortadas de imagens 3D reais, fundo transparente)
-   que se alternam em loop via JS (classe .is-ativa + crossfade), lado a
-   lado com o texto -- o lado troca a cada passo (classe
-   .tutorial-card-inverso, alternada em desenhar()). */
+/* 6 poses estáticas (recortadas de imagens 3D reais, fundo transparente),
+   uma por passo (sem troca automática nem animação), lado a lado com o
+   texto -- o lado troca a cada passo (classe .tutorial-card-inverso,
+   alternada em desenhar()). */
 .tutorial-card-flex {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 16px;
 }
 
@@ -2900,51 +2900,28 @@ body.plat-modal-aberto {
 }
 
 .tutorial-avatar {
-  position: relative;
   flex-shrink: 0;
-  width: 132px;
+  width: 200px;
   aspect-ratio: 260 / 168;
   pointer-events: none;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.4));
-  animation: tutorialAvatarBob 2.8s ease-in-out infinite;
 }
 
 .tutorial-avatar img {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  display: block;
 }
 
-.tutorial-avatar img.is-ativa {
-  opacity: 1;
-}
-
-@keyframes tutorialAvatarBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tutorial-avatar {
-    animation: none;
-  }
-  .tutorial-avatar img {
-    transition: none;
-  }
-}
-
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   .tutorial-card-flex,
   .tutorial-card-inverso .tutorial-card-flex {
     flex-direction: column;
     text-align: center;
   }
   .tutorial-avatar {
-    width: 160px;
+    width: 220px;
     margin: 0 auto;
   }
 }

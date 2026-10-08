@@ -42,8 +42,8 @@
   if (!demo) return; // sem conteúdo pra demonstrar, não mostra um tutorial quebrado
 
   // 6 poses estáticas do mesmo personagem (recortadas de imagens geradas
-  // pelo usuário) que se alternam em loop, simulando o médico gesticulando
-  // -- sem precisar de um GIF/vídeo pesado.
+  // pelo usuário). Sem troca automática/animação -- cada passo do
+  // tutorial usa uma pose fixa diferente (ver escolherPoseDoPasso).
   var AVATAR_FRAMES = [
     "assets/avatar-medico-tutorial-1.webp",
     "assets/avatar-medico-tutorial-2.webp",
@@ -52,31 +52,11 @@
     "assets/avatar-medico-tutorial-5.webp",
     "assets/avatar-medico-tutorial-6.webp"
   ];
-  var SEM_MOVIMENTO = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   AVATAR_FRAMES.forEach(function (src) { var pre = new Image(); pre.src = src; });
 
-  var AVATAR_HTML = AVATAR_FRAMES.map(function (src, idx) {
-    return '<img src="' + src + '" alt=""' + (idx === 0 ? ' class="is-ativa"' : "") + " />";
-  }).join("");
-
-  var avatarIntervalId = null;
-
-  function iniciarCicloAvatar() {
-    pararCicloAvatar();
-    if (SEM_MOVIMENTO) return;
-    var frameAtual = 0;
-    avatarIntervalId = setInterval(function () {
-      var imgs = document.querySelectorAll(".tutorial-avatar img");
-      if (!imgs.length) return;
-      imgs[frameAtual].classList.remove("is-ativa");
-      frameAtual = (frameAtual + 1) % imgs.length;
-      imgs[frameAtual].classList.add("is-ativa");
-    }, 850);
-  }
-
-  function pararCicloAvatar() {
-    if (avatarIntervalId) { clearInterval(avatarIntervalId); avatarIntervalId = null; }
+  function escolherPoseDoPasso(indice) {
+    return AVATAR_FRAMES[indice % AVATAR_FRAMES.length];
   }
 
   var PASSOS = [
@@ -151,7 +131,6 @@
 
   function encerrarTutorial() {
     if (timeoutPosicionar) clearTimeout(timeoutPosicionar);
-    pararCicloAvatar();
     window.removeEventListener("resize", onResize);
     if (elOverlay && elOverlay.parentNode) elOverlay.parentNode.removeChild(elOverlay);
     document.body.classList.remove("plat-modal-aberto");
@@ -179,12 +158,12 @@
     }
 
     var ultimo = passoAtual === PASSOS.length - 1;
-    // Alterna o lado do avatar a cada passo (esquerda/direita), além das
-    // poses já alternando sozinhas via iniciarCicloAvatar().
+    // Alterna o lado do avatar a cada passo (esquerda/direita) e usa uma
+    // pose fixa diferente por passo -- nada se move sozinho.
     elCard.classList.toggle("tutorial-card-inverso", passoAtual % 2 === 1);
     elCard.innerHTML =
       '<div class="tutorial-card-flex">' +
-        '<div class="tutorial-avatar">' + AVATAR_HTML + "</div>" +
+        '<div class="tutorial-avatar"><img src="' + escolherPoseDoPasso(passoAtual) + '" alt="" /></div>' +
         '<div class="tutorial-card-corpo">' +
           '<p class="tutorial-passo-contador">Passo ' + (passoAtual + 1) + " de " + PASSOS.length + "</p>" +
           "<h3>" + ctx.escapeHtml(passo.titulo) + "</h3>" +
@@ -195,8 +174,6 @@
         '<button type="button" class="btn btn-plan-outline" id="tutorialPular">Pular tutorial</button>' +
         '<button type="button" class="btn btn-plan" id="tutorialProximo">' + (ultimo ? "Entendi!" : "Próximo") + "</button>" +
       "</div>";
-
-    iniciarCicloAvatar();
 
     document.getElementById("tutorialPular").addEventListener("click", encerrarTutorial);
     document.getElementById("tutorialProximo").addEventListener("click", function () {
