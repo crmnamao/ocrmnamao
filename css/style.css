@@ -2879,67 +2879,41 @@ body.plat-modal-aberto {
 }
 
 /* ---------- Avatar do "médico" guiando o tutorial ---------- */
+/* Ilustração 3D já animada (gesticulando), fundo transparente -- "espia"
+   por cima do cartão, sem moldura própria (uma moldura circular cortaria
+   as mãos abertas do gesto). */
 .tutorial-avatar {
   position: absolute;
-  top: -30px;
-  left: 22px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: tutorialAvatarBob 2.6s ease-in-out infinite;
+  top: -58px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.4));
+  animation: tutorialAvatarBob 2.8s ease-in-out infinite;
 }
 
-.tutorial-avatar svg {
-  width: 44px;
-  height: 44px;
-  overflow: visible;
-}
-
-.tutorial-avatar-braco {
-  transform-origin: 29px 32px;
-  animation: tutorialAvatarGesto 1.7s ease-in-out infinite;
+.tutorial-avatar img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 @keyframes tutorialAvatarBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-@keyframes tutorialAvatarGesto {
-  0%, 100% { transform: rotate(-6deg); }
-  50% { transform: rotate(22deg); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tutorial-avatar,
-  .tutorial-avatar-braco {
+  .tutorial-avatar {
     animation: none;
   }
 }
 
-.tutorial-card-corpo {
-  margin-left: 48px;
-}
-
 @media (max-width: 420px) {
   .tutorial-avatar {
-    width: 50px;
-    height: 50px;
-    top: -24px;
-    left: 18px;
-  }
-  .tutorial-avatar svg {
-    width: 36px;
-    height: 36px;
-  }
-  .tutorial-card-corpo {
-    margin-left: 36px;
+    width: 78px;
+    top: -46px;
   }
 }
 
@@ -2981,23 +2955,22 @@ body.plat-modal-aberto {
   }
 }
 
-/* ---------- Botão flutuante "Rever tutorial" ---------- */
+/* ---------- Botão flutuante "Rever tutorial" (fixo abaixo do nome do usuário) ---------- */
 .tutorial-fab {
   position: fixed;
-  right: 22px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 150;
+  right: 28px;
+  top: 72px;
+  z-index: 50;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 16px 11px 13px;
+  padding: 7px 14px 7px 11px;
   border-radius: 999px;
   border: 1px solid rgba(201, 162, 74, 0.4);
   background: var(--card);
   color: var(--gold-2);
   font-family: "Inter Tight", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -3006,13 +2979,13 @@ body.plat-modal-aberto {
 
 .tutorial-fab:hover,
 .tutorial-fab:focus-visible {
-  transform: translateY(-50%) translateX(-3px);
+  transform: translateY(-2px);
   border-color: rgba(236, 217, 166, 0.85);
   box-shadow: 0 0 14px rgba(201, 162, 74, 0.3), var(--shadow);
 }
 
 .tutorial-fab-icone {
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1;
 }
 
@@ -3021,7 +2994,6 @@ body.plat-modal-aberto {
     top: auto;
     bottom: 18px;
     right: 18px;
-    transform: none;
     padding: 12px;
   }
   .tutorial-fab-texto {

@@ -41,18 +41,7 @@
   var demo = encontrarItemDemo();
   if (!demo) return; // sem conteúdo pra demonstrar, não mostra um tutorial quebrado
 
-  var AVATAR_SVG =
-    '<svg viewBox="0 0 44 44" aria-hidden="true">' +
-      '<path d="M10 43c0-7.5 5-12 12-12s12 4.5 12 12" fill="#ffffff" stroke="#324879" stroke-width="1"/>' +
-      '<path d="M15 29.5c0 4 2.5 6 7 6s7-2 7-6" stroke="#c9a24a" stroke-width="1.6" stroke-linecap="round" fill="none"/>' +
-      '<circle cx="15" cy="30" r="1.6" fill="#c9a24a"/>' +
-      '<circle cx="22" cy="15.5" r="9.5" fill="#f2c7a0"/>' +
-      '<path d="M12.3 13.5c0-5.2 4.3-8.5 9.7-8.5s9.7 3.3 9.7 8.5c-2.2-2.1-5.6-3.2-9.7-3.2s-7.5 1.1-9.7 3.2z" fill="#3a2b22"/>' +
-      '<g class="tutorial-avatar-braco">' +
-        '<path d="M30 32c3-1 5-3 6-6" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>' +
-        '<circle cx="36.2" cy="25.6" r="2.6" fill="#f2c7a0"/>' +
-      '</g>' +
-    '</svg>';
+  var AVATAR_HTML = '<img src="assets/avatar-medico-tutorial.webp" alt="" />';
 
   var PASSOS = [
     {
@@ -154,12 +143,10 @@
 
     var ultimo = passoAtual === PASSOS.length - 1;
     elCard.innerHTML =
-      '<div class="tutorial-avatar">' + AVATAR_SVG + "</div>" +
-      '<div class="tutorial-card-corpo">' +
-        '<p class="tutorial-passo-contador">Passo ' + (passoAtual + 1) + " de " + PASSOS.length + "</p>" +
-        "<h3>" + ctx.escapeHtml(passo.titulo) + "</h3>" +
-        "<p>" + ctx.escapeHtml(passo.texto) + "</p>" +
-      "</div>" +
+      '<div class="tutorial-avatar">' + AVATAR_HTML + "</div>" +
+      '<p class="tutorial-passo-contador">Passo ' + (passoAtual + 1) + " de " + PASSOS.length + "</p>" +
+      "<h3>" + ctx.escapeHtml(passo.titulo) + "</h3>" +
+      "<p>" + ctx.escapeHtml(passo.texto) + "</p>" +
       '<div class="tutorial-card-acoes">' +
         '<button type="button" class="btn btn-plan-outline" id="tutorialPular">Pular tutorial</button>' +
         '<button type="button" class="btn btn-plan" id="tutorialProximo">' + (ultimo ? "Entendi!" : "Próximo") + "</button>" +
