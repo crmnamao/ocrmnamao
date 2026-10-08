@@ -175,15 +175,31 @@
   if (!acessoLiberado(aluno)) {
     var elShell = document.querySelector(".plat-shell");
     var mensagem = "Seu acesso não está disponível no momento.";
+    var textoWhatsapp = "Olá! Fiz login na plataforma da CRM na Mão e meu acesso ainda não foi liberado.";
     if (aluno.status === "pendente") {
       mensagem = "Seu cadastro foi recebido e está aguardando aprovação da equipe CRM na Mão. Assim que for liberado, este aviso desaparece e o conteúdo fica disponível aqui.";
     } else if (aluno.status === "removido") {
       mensagem = "Seu acesso à plataforma foi desativado. Se você acha que isso é um engano, entre em contato com a equipe CRM na Mão.";
+      textoWhatsapp = "Olá! Meu acesso à plataforma da CRM na Mão foi desativado e gostaria de entender o motivo.";
     } else if (aluno.dataExpiracao && new Date(aluno.dataExpiracao) < new Date()) {
       mensagem = "Seu acesso expirou em " + new Date(aluno.dataExpiracao).toLocaleDateString("pt-BR") + ". Entre em contato com a equipe CRM na Mão para renovar.";
+      textoWhatsapp = "Olá! Meu acesso à plataforma da CRM na Mão expirou e gostaria de renovar.";
     }
     if (elShell) {
-      elShell.innerHTML = '<div class="plat-boas-vindas plat-bloqueio"><h1>Acesso indisponível</h1><p>' + escapeHtml(mensagem) + "</p></div>";
+      elShell.innerHTML =
+        '<div class="plat-boas-vindas plat-bloqueio">' +
+          '<span class="login-pendente-icone">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />' +
+            "</svg>" +
+          "</span>" +
+          "<h1>Acesso ainda não autorizado</h1>" +
+          "<p>" + escapeHtml(mensagem) + "</p>" +
+          '<a class="login-suporte-whatsapp" href="https://wa.me/5516997296208?text=' + encodeURIComponent(textoWhatsapp) + '" target="_blank" rel="noopener">' +
+            '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.385.694 4.611 1.885 6.476L4 29l7.716-1.862A11.94 11.94 0 0016 27c6.627 0 12-5.373 12-12S22.628 3 16.001 3zm0 21.818a9.77 9.77 0 01-5.02-1.377l-.36-.214-3.716.897.912-3.615-.235-.372A9.8 9.8 0 016.182 15c0-5.413 4.406-9.818 9.819-9.818 5.412 0 9.818 4.405 9.818 9.818 0 5.412-4.406 9.818-9.818 9.818zm5.377-7.34c-.294-.147-1.741-.859-2.011-.957-.27-.099-.467-.147-.663.147-.196.294-.76.957-.933 1.153-.172.196-.343.221-.637.074-.294-.147-1.242-.458-2.365-1.462-.874-.78-1.464-1.744-1.636-2.038-.172-.294-.018-.453.129-.6.132-.132.294-.343.441-.514.147-.172.196-.294.294-.49.098-.196.049-.368-.024-.515-.074-.147-.663-1.597-.909-2.187-.239-.575-.482-.497-.663-.506-.172-.008-.368-.01-.564-.01-.196 0-.515.074-.784.368-.27.294-1.03 1.006-1.03 2.454s1.054 2.847 1.201 3.043c.147.196 2.073 3.166 5.02 4.44.702.303 1.25.484 1.677.62.705.224 1.347.192 1.855.117.566-.084 1.741-.712 1.986-1.4.245-.688.245-1.278.172-1.4-.073-.122-.269-.196-.563-.343z" /></svg>' +
+            "Falar com o suporte" +
+          "</a>" +
+        "</div>";
     }
     return;
   }
