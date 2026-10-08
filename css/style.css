@@ -2837,6 +2837,202 @@ body.plat-modal-aberto {
   margin-bottom: 20px;
 }
 
+/* ============================================================
+   TUTORIAL (primeiro acesso à plataforma)
+   ============================================================ */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(6, 18, 16, 0.78);
+  transition: background 0.25s ease;
+}
+
+.tutorial-overlay.tem-alvo {
+  background: transparent;
+}
+
+.tutorial-spot {
+  position: fixed;
+  display: none;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 9999px rgba(6, 18, 16, 0.82),
+    0 0 0 2px var(--accent),
+    0 0 24px rgba(143, 201, 172, 0.45);
+  pointer-events: none;
+  transition: top 0.35s ease, left 0.35s ease, width 0.35s ease, height 0.35s ease;
+}
+
+.tutorial-card {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 26px 24px 22px 24px;
+}
+
+/* ---------- Avatar do "médico" guiando o tutorial ---------- */
+.tutorial-avatar {
+  position: absolute;
+  top: -30px;
+  left: 22px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tutorialAvatarBob 2.6s ease-in-out infinite;
+}
+
+.tutorial-avatar svg {
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+}
+
+.tutorial-avatar-braco {
+  transform-origin: 29px 32px;
+  animation: tutorialAvatarGesto 1.7s ease-in-out infinite;
+}
+
+@keyframes tutorialAvatarBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes tutorialAvatarGesto {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(22deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-avatar,
+  .tutorial-avatar-braco {
+    animation: none;
+  }
+}
+
+.tutorial-card-corpo {
+  margin-left: 48px;
+}
+
+@media (max-width: 420px) {
+  .tutorial-avatar {
+    width: 50px;
+    height: 50px;
+    top: -24px;
+    left: 18px;
+  }
+  .tutorial-avatar svg {
+    width: 36px;
+    height: 36px;
+  }
+  .tutorial-card-corpo {
+    margin-left: 36px;
+  }
+}
+
+.tutorial-passo-contador {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--gold-2);
+  margin-bottom: 6px;
+}
+
+.tutorial-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.tutorial-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tutorial-card-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.tutorial-card-acoes .btn {
+  flex: 1;
+}
+
+@media (max-width: 560px) {
+  .tutorial-card {
+    padding: 22px 20px 18px 20px;
+  }
+}
+
+/* ---------- Botão flutuante "Rever tutorial" ---------- */
+.tutorial-fab {
+  position: fixed;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px 11px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 162, 74, 0.4);
+  background: var(--card);
+  color: var(--gold-2);
+  font-family: "Inter Tight", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tutorial-fab:hover,
+.tutorial-fab:focus-visible {
+  transform: translateY(-50%) translateX(-3px);
+  border-color: rgba(236, 217, 166, 0.85);
+  box-shadow: 0 0 14px rgba(201, 162, 74, 0.3), var(--shadow);
+}
+
+.tutorial-fab-icone {
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .tutorial-fab {
+    top: auto;
+    bottom: 18px;
+    right: 18px;
+    transform: none;
+    padding: 12px;
+  }
+  .tutorial-fab-texto {
+    display: none;
+  }
+  .tutorial-fab:hover,
+  .tutorial-fab:focus-visible {
+    transform: translateY(-3px);
+  }
+}
+
 .quiz-opcoes {
   display: flex;
   flex-direction: column;

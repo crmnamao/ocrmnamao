@@ -606,5 +606,11 @@
   renderSidebar();
   renderMain();
 
-  window.PlataformaCtx = { sessao: sessao, aluno: aluno, atualizarAvatar: atualizarAvatar, escapeHtml: escapeHtml };
+  window.PlataformaCtx = {
+    sessao: sessao,
+    aluno: aluno,
+    atualizarAvatar: atualizarAvatar,
+    escapeHtml: escapeHtml,
+    selecionarItem: selecionarItem
+  };
 })();
