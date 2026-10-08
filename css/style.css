@@ -1489,6 +1489,13 @@ section {
   height: 27px;
 }
 
+.contato-social-icon img {
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+  display: block;
+}
+
 .contato-social-icon:hover {
   background: rgba(143, 201, 172, 0.22);
   transform: translateY(-3px);
