@@ -756,9 +756,20 @@ section {
 }
 
 .team-card-body li {
+  position: relative;
+  padding-left: 20px;
   color: var(--muted);
   font-size: 13.5px;
   line-height: 1.5;
+}
+
+.team-card-body li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--gold);
+  font-weight: 700;
 }
 
 /* ============================================================
