@@ -2347,6 +2347,16 @@ section {
   margin: -8px 0 16px;
 }
 
+.plat-form-contexto {
+  font-size: 12.5px;
+  color: var(--accent-2);
+  background: var(--accent-soft);
+  border: 1px solid rgba(143, 201, 172, 0.3);
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin: -6px 0 16px;
+}
+
 .plat-form-status {
   margin-top: 12px;
   font-size: 13px;
@@ -2769,6 +2779,31 @@ section {
   color: var(--muted);
 }
 
+.plat-feedback-estacao {
+  margin-top: 18px;
+  padding: 18px 20px;
+  background: transparent;
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.plat-feedback-estacao p {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.plat-feedback-estacao .btn {
+  white-space: nowrap;
+  padding: 10px 18px;
+  font-size: 13px;
+}
+
 body.plat-modal-aberto {
   overflow: hidden;
 }
@@ -2969,7 +3004,7 @@ body.plat-modal-aberto {
   position: fixed;
   right: 28px;
   top: 72px;
-  z-index: 50;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3557,6 +3592,7 @@ body.plat-modal-aberto {
 }
 
 .admin-view-tab {
+  position: relative;
   background: transparent;
   border: 1px solid var(--card-border);
   color: var(--muted);
@@ -3568,6 +3604,35 @@ body.plat-modal-aberto {
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* Bolinha piscando -- avisa que tem feedback ainda não respondido
+   (status "Aberto"). Ver atualizarBadgeFeedbackTab() em admin.js. */
+.admin-tab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--error);
+  border: 2px solid var(--bg-2);
+  animation: adminTabBadgeBlink 1.3s ease-in-out infinite;
+}
+
+.admin-tab-badge[hidden] {
+  display: none;
+}
+
+@keyframes adminTabBadgeBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-tab-badge {
+    animation: none;
+  }
 }
 
 .admin-view-tab:hover {

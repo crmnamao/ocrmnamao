@@ -352,6 +352,18 @@
     );
   }
 
+  // Feedback específico da estação (dúvida/sugestão/erro) -- reaproveita o
+  // mesmo modal do botão "Feedback" do topo (window.abrirFeedbackDaEstacao,
+  // exposto por plataforma-extra.js), só passando o contexto da estação.
+  function renderFeedbackEstacao(grupo, item) {
+    return (
+      '<div class="plat-feedback-estacao">' +
+        '<p>Encontrou um erro, tem uma dúvida ou uma sugestão sobre esta estação?</p>' +
+        '<button type="button" class="btn btn-plan-outline" id="btnFeedbackEstacao">💬 Feedback desta estação</button>' +
+      '</div>'
+    );
+  }
+
   function renderMain() {
     var achado = encontrarItem(estadoAtual.grupoId, estadoAtual.itemId);
     if (!achado) {
@@ -373,7 +385,8 @@
         item.videos.map(function (v, idx) { return renderVideoCard(item, idx); }).join("") +
       '</div>' +
       renderMaterialCard(item) +
-      (item.quiz ? renderQuizSecaoEmbutida(item) : "");
+      (item.quiz ? renderQuizSecaoEmbutida(item) : "") +
+      renderFeedbackEstacao(grupo, item);
 
     elMain.querySelectorAll(".plat-video-player").forEach(function (videoEl) {
       var maiorTempoAssistido = 0;
@@ -409,6 +422,15 @@
     var btnQuiz = document.getElementById("btnIniciarQuiz");
     if (btnQuiz) {
       btnQuiz.addEventListener("click", function () { abrirQuiz(item); });
+    }
+
+    var btnFeedbackEstacao = document.getElementById("btnFeedbackEstacao");
+    if (btnFeedbackEstacao) {
+      btnFeedbackEstacao.addEventListener("click", function () {
+        if (window.abrirFeedbackDaEstacao) {
+          window.abrirFeedbackDaEstacao(grupo.titulo + " — " + item.titulo);
+        }
+      });
     }
   }
 

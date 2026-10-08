@@ -137,7 +137,10 @@
   var elFeedbackOverlay = document.getElementById("feedbackOverlay");
   var elBtnAbrirFeedback = document.getElementById("btnAbrirFeedback");
 
-  function abrirFeedback() {
+  // contextoEstacao: título da estação (+ grupo) quando o feedback é aberto
+  // a partir do botão de uma estação específica (ver plataforma.js). Sem
+  // isso, abre como o feedback geral (botão "Feedback" do topo).
+  function abrirFeedback(contextoEstacao) {
     elFeedbackOverlay.innerHTML =
       '<div class="quiz-modal-card plat-form-modal">' +
         '<div class="quiz-modal-topo">' +
@@ -145,6 +148,9 @@
           '<button type="button" class="quiz-modal-fechar" id="feedbackFechar" aria-label="Fechar">✕</button>' +
         "</div>" +
         '<p class="plat-form-nota">Dúvida, erro na plataforma ou sugestão — sua mensagem cai direto na nossa equipe.</p>' +
+        (contextoEstacao
+          ? '<p class="plat-form-contexto">Sobre: <strong>' + escapeHtml(contextoEstacao) + "</strong></p>"
+          : "") +
         '<label class="plat-form-label">Categoria' +
           '<select id="feedbackCategoria">' +
             '<option value="Dúvida">Dúvida</option>' +
@@ -176,7 +182,7 @@
         nome: ctx.aluno.nome || sessao.nome,
         email: sessao.email,
         categoria: document.getElementById("feedbackCategoria").value,
-        mensagem: mensagem
+        mensagem: contextoEstacao ? "[" + contextoEstacao + "] " + mensagem : mensagem
       }).then(function (resultado) {
         status.hidden = false;
         status.textContent = resultado && resultado.ok ? "Mensagem enviada! A equipe vai responder por aqui mesmo." : "Não deu pra enviar agora, tente de novo em instantes.";
@@ -190,7 +196,10 @@
     });
   }
 
-  if (elBtnAbrirFeedback) elBtnAbrirFeedback.addEventListener("click", abrirFeedback);
+  if (elBtnAbrirFeedback) elBtnAbrirFeedback.addEventListener("click", function () { abrirFeedback(); });
+
+  // Chamado pelo botão de feedback de cada estação (plataforma.js).
+  window.abrirFeedbackDaEstacao = abrirFeedback;
 
   // ================= NOTIFICAÇÕES (sino) =================
 

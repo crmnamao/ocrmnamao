@@ -123,7 +123,8 @@
     elMain.innerHTML =
       '<div class="admin-view-switch">' +
         abasView.map(function (v) {
-          return '<button type="button" class="admin-view-tab ' + (estado.view === v.chave ? "is-ativa" : "") + '" data-view="' + v.chave + '">' + v.rotulo + "</button>";
+          var badge = v.chave === "feedbacks" ? '<span class="admin-tab-badge" id="feedbackTabBadge" hidden></span>' : "";
+          return '<button type="button" class="admin-view-tab ' + (estado.view === v.chave ? "is-ativa" : "") + '" data-view="' + v.chave + '">' + v.rotulo + badge + "</button>";
         }).join("") +
       "</div>" +
       '<div id="adminViewBody"></div>';
@@ -139,6 +140,26 @@
     else if (estado.view === "avisos") renderAvisosView();
     else if (estado.view === "videos") renderVideosView();
     else renderAlunosView();
+
+    atualizarBadgeFeedbackTab();
+  }
+
+  // ---------- Bolinha piscando na aba "Feedbacks" (feedback ainda não
+  // respondido, status "Aberto") ----------
+
+  var pendentesFeedback = 0;
+
+  function atualizarBadgeFeedbackTab() {
+    var elBadge = document.getElementById("feedbackTabBadge");
+    if (elBadge) elBadge.hidden = pendentesFeedback <= 0;
+  }
+
+  function verificarFeedbackPendente() {
+    window.FeedbackAPI.listarAdmin().then(function (resultado) {
+      if (!resultado || !resultado.ok) return;
+      pendentesFeedback = resultado.itens.filter(function (f) { return f.status === "Aberto"; }).length;
+      atualizarBadgeFeedbackTab();
+    });
   }
 
   // ---------- View: Alunos ----------
@@ -264,6 +285,8 @@
         return;
       }
       cacheFeedback = resultado.itens.sort(function (a, b) { return new Date(b.dataHora) - new Date(a.dataHora); });
+      pendentesFeedback = cacheFeedback.filter(function (f) { return f.status === "Aberto"; }).length;
+      atualizarBadgeFeedbackTab();
 
       if (!cacheFeedback.length) {
         elViewBody.innerHTML = '<p class="admin-vazio">Nenhum feedback recebido ainda.</p>';
@@ -1182,4 +1205,12 @@
   });
 
   renderAdmin();
+
+  // Verifica feedback pendente mesmo se o admin estiver em outra aba
+  // (Alunos/Avisos/Vídeos), e continua checando a cada 1min enquanto a
+  // página fica aberta -- pra bolinha aparecer mesmo sem recarregar.
+  if (window.FeedbackAPI) {
+    verificarFeedbackPendente();
+    setInterval(verificarFeedbackPendente, 60000);
+  }
 })();
