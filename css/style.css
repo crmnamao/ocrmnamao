@@ -2870,50 +2870,82 @@ body.plat-modal-aberto {
   bottom: 24px;
   transform: translateX(-50%);
   width: calc(100% - 32px);
-  max-width: 440px;
+  max-width: 500px;
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 26px 24px 22px 24px;
+  padding: 22px 24px;
 }
 
 /* ---------- Avatar do "médico" guiando o tutorial ---------- */
-/* Ilustração 3D já animada (gesticulando), fundo transparente -- "espia"
-   por cima do cartão, sem moldura própria (uma moldura circular cortaria
-   as mãos abertas do gesto). */
+/* 6 poses estáticas (recortadas de imagens 3D reais, fundo transparente)
+   que se alternam em loop via JS (classe .is-ativa + crossfade), lado a
+   lado com o texto -- o lado troca a cada passo (classe
+   .tutorial-card-inverso, alternada em desenhar()). */
+.tutorial-card-flex {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tutorial-card-inverso .tutorial-card-flex {
+  flex-direction: row-reverse;
+}
+
+.tutorial-card-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
 .tutorial-avatar {
-  position: absolute;
-  top: -58px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 96px;
+  position: relative;
+  flex-shrink: 0;
+  width: 132px;
+  aspect-ratio: 260 / 168;
   pointer-events: none;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.4));
   animation: tutorialAvatarBob 2.8s ease-in-out infinite;
 }
 
 .tutorial-avatar img {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  display: block;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.tutorial-avatar img.is-ativa {
+  opacity: 1;
 }
 
 @keyframes tutorialAvatarBob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-4px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tutorial-avatar {
     animation: none;
   }
+  .tutorial-avatar img {
+    transition: none;
+  }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 520px) {
+  .tutorial-card-flex,
+  .tutorial-card-inverso .tutorial-card-flex {
+    flex-direction: column;
+    text-align: center;
+  }
   .tutorial-avatar {
-    width: 78px;
-    top: -46px;
+    width: 160px;
+    margin: 0 auto;
   }
 }
 
